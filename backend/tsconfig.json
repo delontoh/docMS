@@ -3,7 +3,13 @@
     "compilerOptions": {
         "module": "ES2022",
         "outDir": "dist",
-        "rootDir": "src"
+        "rootDir": "src",
+        "baseUrl": ".",
+        "paths": {
+            "@controllers/*": ["./src/controllers/*"],
+            "@models/*": ["./src/models/*"],
+            "@routes/*": ["./src/routes/*"]
+        }
     },
     "include": ["src"]
 }

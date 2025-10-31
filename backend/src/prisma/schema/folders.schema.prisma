@@ -1,0 +1,11 @@
+model Folder {
+    id          Int      @id @default(autoincrement())
+    name        String   @unique @db.VarChar(191)
+    created_at  DateTime @default(now())
+    updated_at  DateTime @updatedAt
+    documents   Document[]
+    
+    folders_user_id    Int
+    created_by User     @relation(fields: [folders_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    @@map("folders")
+}

@@ -41,7 +41,7 @@ const resolvers = {
     },
     Mutation: {
         createUser: async (_: unknown, args: { email: string; name?: string | null }) =>
-            prisma.user.create({ data: { email: args.email, name: args.name ?? null } }),
+            prisma.user.create({ data: { email: args.email, name: args.name ?? '' } }),
         updateUser: async (_: unknown, args: { id: string; email?: string; name?: string | null }) =>
             prisma.user.update({
                 where: { id: Number(args.id) },
@@ -59,14 +59,27 @@ async function start() {
     app.use(cors());
     app.use(bodyParser.json());
 
+    // REST API Routes
+    const documentsRoutes = (await import('@routes/documents/documents.routes')).default;
+    const foldersRoutes = (await import('@routes/folders/folders.routes')).default;
+
+    app.use('/api/documents', documentsRoutes);
+    app.use('/api/folders', foldersRoutes);
+
+    // GraphQL
     const server = new ApolloServer({ typeDefs, resolvers });
     await server.start();
-
     app.use('/graphql', expressMiddleware(server));
+
+    // Health check endpoint
+    app.get('/health', (req, res) => {
+        res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    });
 
     const port = process.env.PORT ? Number(process.env.PORT) : 3000;
     app.listen(port, () => {
-        console.log(`GraphQL server ready at http://localhost:${port}/graphql`);
+        console.log('\nO===> Start Environment On: ' + app.get('env') + '\n');
+        console.log(`Listening On Port: ${port} <===0\n`);
     });
 }
 

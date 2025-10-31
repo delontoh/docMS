@@ -1,0 +1,11 @@
+model User {
+    id          Int      @id @default(autoincrement())
+    email       String   @unique @db.VarChar(191)
+    name        String   @db.VarChar(191)
+    created_at  DateTime @default(now()) @db.Timestamp(6)
+    updated_at  DateTime @updatedAt @db.Timestamp(6)
+    documents   Document[]
+    folders     Folder[]
+
+    @@map("users")
+}

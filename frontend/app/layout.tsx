@@ -2,20 +2,16 @@ import type { Metadata } from 'next';
 import Providers from './providers';
 
 export const metadata: Metadata = {
-  title: 'DocMS',
-  description: 'Document Management System'
+    title: 'DocMS',
+    description: 'Document Management System',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <body>
-        <Providers>
-          {children}
-        </Providers>
-      </body>
-    </html>
-  );
+    return (
+        <html lang="en">
+            <body>
+                <Providers>{children}</Providers>
+            </body>
+        </html>
+    );
 }
-
-

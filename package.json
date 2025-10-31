@@ -1,0 +1,32 @@
+{
+  "name": "docms",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "engines": {
+    "node": ">=20.11.x"
+  },
+  "scripts": {
+    "format": "prettier -w .",
+    "format:check": "prettier -c .",
+    "lint": "eslint .",
+    "type-check": "tsc -b --pretty false",
+    "dev:backend": "npm --workspace backend run dev",
+    "dev:frontend": "npm --workspace frontend run dev",
+    "build:backend": "npm --workspace backend run build",
+    "build:frontend": "npm --workspace frontend run build"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.9.0",
+    "@typescript-eslint/parser": "^8.9.0",
+    "cross-env": "^10.1.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.11",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  }
+}

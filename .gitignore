@@ -18,6 +18,10 @@ yarn.lock
 npm-shrinkwrap.json
 
 # misc
+.env
 .DS_Store
 DS_Store
 .vscode/*
+
+# Prisma migrations
+backend/src/prisma/schema/migrations/

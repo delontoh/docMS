@@ -3,11 +3,13 @@
 Frontend (Next.js 14 + Material UI + Apollo Client + Redux) and Backend (Node.js 20.11 + Apollo Server + Prisma + MySQL 8).
 
 ## Prerequisites
+
 - Node.js 20.11+
 - MySQL 8+
 - npm
 
 ## Backend Setup
+
 ```bash
 cd backend
 cp env.example .env
@@ -20,10 +22,12 @@ npm run dev
 ```
 
 GraphQL:
+
 - Query `health`
 - CRUD `User` (id, email, name)
 
 ## Frontend Setup
+
 ```bash
 cd frontend
 # optionally set NEXT_PUBLIC_GRAPHQL_URL if backend not on localhost:4000
@@ -33,9 +37,11 @@ npm run dev
 ```
 
 ## Project Structure
+
 - `backend/`: Express + Apollo Server + Prisma (MySQL 8)
 - `frontend/`: Next.js App Router with MUI, Apollo Client, Redux Toolkit
 
 ## Tooling
+
 - ESLint + Prettier configured in both apps
 - Node version pinned via `.nvmrc` (20.11.0)
