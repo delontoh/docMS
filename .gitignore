@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+
+# build output
+.next/
+_next
+dist/
+
+# env
+.env
+/backend/.env
+/frontend/.env
+
+# lock files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+npm-shrinkwrap.json
+
+# misc
+.DS_Store
+DS_Store
+.vscode/*
