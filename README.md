@@ -1,6 +1,7 @@
 # DocMS Monorepo
 
-Frontend (Next.js 14 + Material UI + Apollo Client + Redux) and Backend (Node.js 20.11 + Apollo Server + Prisma + MySQL 8).
+Frontend - (Next.js 14 + Material UI + Redux)
+Backend - (Node.js 20.11 + Express + Prisma + MySQL 8).
 
 ## Prerequisites
 
@@ -17,20 +18,25 @@ npm install
 npm run prisma:generate
 # Update DATABASE_URL in .env to point to your MySQL instance
 npm run prisma:migrate -- --name init
+npm run prisma:seed
 npm run dev
-# Server at http://localhost:4000/graphql
+# Server at http://localhost:3000
+# REST API at http://localhost:3000/api
 ```
 
-GraphQL:
+REST API Endpoints:
 
-- Query `health`
-- CRUD `User` (id, email, name)
+- `GET /health` - Health check
+- `GET /api/documents` - Get all documents (with pagination)
+- `POST /api/documents` - Create document
+- `GET /api/folders` - Get all folders (with pagination)
+- `POST /api/folders` - Create folder
 
 ## Frontend Setup
 
 ```bash
 cd frontend
-# optionally set NEXT_PUBLIC_GRAPHQL_URL if backend not on localhost:4000
+# optionally set NEXT_PUBLIC_API_URL if backend not on localhost:3000
 npm install
 npm run dev
 # App at http://localhost:3000
@@ -38,8 +44,8 @@ npm run dev
 
 ## Project Structure
 
-- `backend/`: Express + Apollo Server + Prisma (MySQL 8)
-- `frontend/`: Next.js App Router with MUI, Apollo Client, Redux Toolkit
+- `backend/`: Express REST API + Prisma (MySQL 8)
+- `frontend/`: Next.js App Router with MUI, Redux Toolkit
 
 ## Tooling
 
