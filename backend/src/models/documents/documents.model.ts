@@ -161,24 +161,6 @@ export const getDocumentById = async (id: number): Promise<Document | null> => {
 };
 
 /**
- * Update a document by ID
- */
-export const updateDocument = async (id: number, data: UpdateDocumentInput): Promise<Document> => {
-    return prisma.document.update({
-        where: { id },
-        data: {
-            name: data.name,
-            file_size: data.file_size,
-            folder_document_id: data.folder_document_id,
-        },
-        include: {
-            created_by: true,
-            belong_to_folder: true,
-        },
-    });
-};
-
-/**
  * Delete a document by ID
  */
 export const deleteDocument = async (id: number): Promise<Document> => {
@@ -194,4 +176,22 @@ export const deleteManyDocuments = async (ids: number[]): Promise<{ count: numbe
     return prisma.document.deleteMany({
         where: { id: { in: ids } },
     });
+};
+
+/**
+ * Check duplicate document names for a user
+ * Returns an array of names that already exist
+ */
+export const checkDocumentNamesExist = async (userId: number, names: string[]): Promise<string[]> => {
+    const existingDocuments = await prisma.document.findMany({
+        where: {
+            document_user_id: userId,
+            name: { in: names },
+        },
+        select: {
+            name: true,
+        },
+    });
+
+    return existingDocuments.map((doc) => doc.name);
 };

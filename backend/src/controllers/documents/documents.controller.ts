@@ -34,8 +34,16 @@ export const createDocument = async (req: Request, res: Response): Promise<void>
         });
 
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'createDocument: Error';
-        res.status(500).json({
+        let errorMessage = error instanceof Error ? error.message : 'createDocument: Error';
+        let statusCode = 500;
+
+        //Handle duplicate document names for same user (Prisma error messages)
+        if (errorMessage.includes('Unique constraint') || errorMessage.includes('P2002')) {
+            errorMessage = `A document with the name "${name}" already exists for this user.`;
+            statusCode = 500;
+        }
+
+        res.status(statusCode).json({
             success: false,
             message: 'Failed to create document',
             error: errorMessage,
@@ -214,58 +222,6 @@ export const getDocumentById = async (req: Request, res: Response): Promise<void
 };
 
 /**
- * Update a document by ID
- * PUT /documents/:id
- */
-export const updateDocument = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const id = Number(req.params.id);
-
-        if (isNaN(id)) {
-            res.status(400).json({
-                success: false,
-                message: 'Invalid document ID',
-            });
-            return;
-        }
-
-        const { name, file_size, folder_document_id } = req.body;
-
-        const data: UpdateDocumentInput = {
-            name,
-            file_size,
-            folder_document_id: folder_document_id !== undefined ? Number(folder_document_id) : null,
-        };
-
-        const document = await documentsModel.updateDocument(id, data);
-
-        res.status(200).json({
-            success: true,
-            message: 'Document updated successfully',
-            data: document,
-        });
-
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'updateDocument: Error';
-        
-        //Handle Prisma not found error
-        if (errorMessage.includes('Record to update does not exist')) {
-            res.status(500).json({
-                success: false,
-                message: 'Document not found',
-            });
-            return;
-        }
-
-        res.status(500).json({
-            success: false,
-            message: 'Failed to update document',
-            error: errorMessage,
-        });
-    }
-};
-
-/**
  * Delete a document by ID
  * DELETE /documents/:id
  */
@@ -347,6 +303,54 @@ export const deleteManyDocuments = async (req: Request, res: Response): Promise<
         res.status(500).json({
             success: false,
             message: 'Failed to delete documents',
+            error: errorMessage,
+        });
+    }
+};
+
+/**
+ * Check which document names already exist for a user
+ * POST /documents/user/:userId/check-names
+ * Body: { names: ["file1.pdf", "file2.docx"] }
+ */
+export const checkDocumentNamesExist = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = Number(req.params.userId);
+        const { names } = req.body;
+
+        if (isNaN(userId)) {
+            res.status(400).json({
+                success: false,
+                message: 'Invalid user ID',
+            });
+            return;
+        }
+
+        if (!Array.isArray(names) || names.length === 0) {
+            res.status(400).json({
+                success: false,
+                message: 'Invalid names array provided',
+            });
+            return;
+        }
+
+        const existingNames = await documentsModel.checkDocumentNamesExist(userId, names);
+
+        res.status(200).json({
+            success: true,
+            message: 'Document names checked successfully',
+            data: {
+                existingNames,
+                totalChecked: names.length,
+                duplicatesFound: existingNames.length,
+            },
+        });
+
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'checkDocumentNamesExist: Error';
+        res.status(500).json({
+            success: false,
+            message: 'Failed to check document names',
             error: errorMessage,
         });
     }

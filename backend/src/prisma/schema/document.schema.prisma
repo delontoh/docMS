@@ -1,6 +1,6 @@
 model Document {
     id          Int      @id @default(autoincrement())
-    name        String   @unique @db.VarChar(191)
+    name        String   @db.VarChar(191)
     file_size   String   @db.TinyText
     created_at  DateTime @default(now())
     updated_at  DateTime @updatedAt
@@ -10,5 +10,6 @@ model Document {
     folder_document_id  Int?
     belong_to_folder    Folder?  @relation(fields: [folder_document_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+    @@unique([name, document_user_id])
     @@map("documents")
 }

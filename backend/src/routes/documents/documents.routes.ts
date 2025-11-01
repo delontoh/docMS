@@ -27,6 +27,14 @@ router.get('/', documentsController.getAllDocuments);
 router.get('/user/:userId', documentsController.getDocumentsByUserId);
 
 /**
+ * @route   POST /api/documents/user/:userId/check-names
+ * @desc    Check duplicate document names for a user
+ * @access  Public
+ * @body    { names: ["file1.pdf", "file2.docx"] }
+ */
+router.post('/user/:userId/check-names', documentsController.checkDocumentNamesExist);
+
+/**
  * @route   GET /api/documents/folder/:folderId
  * @desc    Get documents by folder ID with pagination
  * @access  Public
@@ -40,13 +48,6 @@ router.get('/folder/:folderId', documentsController.getDocumentsByFolderId);
  * @access  Public
  */
 router.get('/:id', documentsController.getDocumentById);
-
-/**
- * @route   PUT /api/documents/:id
- * @desc    Update a document by ID
- * @access  Public
- */
-router.put('/:id', documentsController.updateDocument);
 
 /**
  * @route   DELETE /api/documents/:id

@@ -11,9 +11,11 @@ async function start() {
     //API Routes
     const documentsRoutes = (await import('@routes/documents/documents.routes')).default;
     const foldersRoutes = (await import('@routes/folders/folders.routes')).default;
+    const usersRoutes = (await import('@routes/users/users.routes')).default;
 
     app.use('/api/documents', documentsRoutes);
     app.use('/api/folders', foldersRoutes);
+    app.use('/api/users', usersRoutes);
 
     // Health check endpoint
     app.get('/health', (req, res) => {
