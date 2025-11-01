@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     Box,
     Card,
@@ -34,12 +34,13 @@ import {
     MoreHoriz as MoreHorizIcon,
 } from '@mui/icons-material';
 import {
-    getDocuments,
-    getFolders,
+    getUserDocumentsAndFolders,
     deleteDocument,
     deleteFolder,
+    getUsers,
 } from '@/lib/api';
 import type { DocumentItem, FolderItem, Item } from '@/types';
+import UploadModal from '@/components/features/documents/UploadModal';
 
 export default function DocumentListing() {
     const [items, setItems] = useState<Item[]>([]);
@@ -52,6 +53,24 @@ export default function DocumentListing() {
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
     const [anchorEl, setAnchorEl] = useState<{ element: HTMLElement; itemId: number } | null>(null);
+    const [uploadModalOpen, setUploadModalOpen] = useState(false);
+    const [userId, setUserId] = useState<number | null>(null);
+
+    //Fetch user ID from database (only one user exists in seeded data)
+    useEffect(() => {
+        const fetchUserId = async () => {
+            try {
+                const usersResponse = await getUsers({ page: 1, limit: 1 });
+                if (usersResponse.data.length > 0) {
+                    setUserId(usersResponse.data[0].id);
+                }
+            } catch (err) {
+                console.error('Failed to fetch user:', err);
+            }
+        };
+
+        fetchUserId();
+    }, []);
 
     //Ensure valid page range when totalPages changes
     useEffect(() => {
@@ -60,54 +79,64 @@ export default function DocumentListing() {
         }
     }, [totalPages]);
 
-    //Fetch both documents and folders
+    //Fetch both documents and folders for the current user
+    const fetchData = useCallback(async () => {
+        if (!userId) {
+            setItems([]);
+            setTotal(0);
+            setTotalPages(1);
+            setLoading(false);
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await getUserDocumentsAndFolders(userId, { page, limit: rowsPerPage });
+
+            const documents: DocumentItem[] = response.documents.map((doc) => ({
+                ...doc,
+                type: 'document' as const,
+            }));
+
+            const folders: FolderItem[] = response.folders.map((folder) => ({
+                ...folder,
+                type: 'folder' as const,
+            }));
+
+            //Combine both folders and documents (Sort by newest created date first with folders at the top)
+            const combined = [...documents, ...folders].sort((a, b) => {
+                if (a.type !== b.type) {
+                    return a.type === 'folder' ? -1 : 1;
+                }
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            });
+
+            setItems(combined);
+            setTotal(response.total);
+            setTotalPages(response.totalPages || 1);
+
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load documents');
+            setItems([]);
+            setTotal(0);
+            setTotalPages(1);
+        } finally {
+            setLoading(false);
+        }
+    }, [userId, page, rowsPerPage]);
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-
-                const [documentsResponse, foldersResponse] = await Promise.all([
-                    getDocuments({ page, limit: rowsPerPage }),
-                    getFolders({ page, limit: rowsPerPage }),
-                ]);
-
-                const documents: DocumentItem[] = documentsResponse.data.map((doc) => ({
-                    ...doc,
-                    type: 'document' as const,
-                }));
-
-                const folders: FolderItem[] = foldersResponse.data.map((folder) => ({
-                    ...folder,
-                    type: 'folder' as const,
-                }));
-
-                //Combine both folders and documents (Sort by newest created date first with folders at the top)
-                const combined = [...documents, ...folders].sort((a, b) => {
-                    if (a.type !== b.type) {
-                        return a.type === 'folder' ? -1 : 1;
-                    }
-                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-                });
-
-                setItems(combined);
-                setTotal(documentsResponse.total + foldersResponse.total);
-                const calculatedTotalPages = Math.ceil((documentsResponse.total + foldersResponse.total) / rowsPerPage) || 1;
-                setTotalPages(calculatedTotalPages);
-
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Failed to load documents');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [page, rowsPerPage]);
+        if (userId !== null) {
+            fetchData();
+        }
+    }, [fetchData, userId]);
 
     // Filter items by search query
     const filteredItems = useMemo(() => {
         if (!searchQuery.trim()) return items;
+        
         const query = searchQuery.toLowerCase();
         return items.filter((item) => item.name.toLowerCase().includes(query));
     }, [items, searchQuery]);
@@ -182,6 +211,7 @@ export default function DocumentListing() {
                     <Button
                         variant="outlined"
                         startIcon={<UploadIcon />}
+                        onClick={() => setUploadModalOpen(true)}
                         sx={{
                             borderColor: '#1976d2',
                             color: '#1976d2',
@@ -391,6 +421,18 @@ export default function DocumentListing() {
                     </>
                 )}
             </Menu>
+
+            {/* Upload Modal */}
+            {userId !== null && (
+                <UploadModal
+                    open={uploadModalOpen}
+                    onClose={() => setUploadModalOpen(false)}
+                    userId={userId}
+                    onUploadSuccess={() => {
+                        fetchData();
+                    }}
+                />
+            )}
         </Card>
     );
 }

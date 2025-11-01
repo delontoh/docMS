@@ -53,3 +53,40 @@ export const deleteUser = async (id: number): Promise<{ success: boolean; messag
     });
 };
 
+/**
+ * Get documents and folders for a user with pagination
+ */
+export const getUserDocumentsAndFolders = async (
+    userId: number,
+    params?: { page?: number; limit?: number }
+): Promise<{
+    success: boolean;
+    documents: any[];
+    folders: any[];
+    documentsTotal: number;
+    foldersTotal: number;
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}> => {
+    const queryParams = new URLSearchParams();
+
+    if (params?.page) queryParams.set('page', params.page.toString());
+    if (params?.limit) queryParams.set('limit', params.limit.toString());
+
+    const query = queryParams.toString();
+    
+    return request<{
+        success: boolean;
+        documents: any[];
+        folders: any[];
+        documentsTotal: number;
+        foldersTotal: number;
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }>(`/users/${userId}/documents-folders${query ? `?${query}` : ''}`);
+};
+

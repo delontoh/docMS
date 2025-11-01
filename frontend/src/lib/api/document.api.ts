@@ -2,16 +2,22 @@ import { request } from './client';
 import type { Document, CreateDocumentInput, PaginatedResponse } from '@/types';
 
 /**
- * Get all documents with pagination
+ * Get documents by user ID with pagination
  */
-export const getDocuments = async (
+export const getDocumentsByUserId = async (
+    userId: number,
     params?: { page?: number; limit?: number }
 ): Promise<PaginatedResponse<Document>> => {
     const queryParams = new URLSearchParams();
+
     if (params?.page) queryParams.set('page', params.page.toString());
     if (params?.limit) queryParams.set('limit', params.limit.toString());
+
     const query = queryParams.toString();
-    return request<PaginatedResponse<Document>>(`/documents${query ? `?${query}` : ''}`);
+    
+    return request<PaginatedResponse<Document>>(
+        `/documents/user/${userId}${query ? `?${query}` : ''}`
+    );
 };
 
 /**
@@ -34,24 +40,27 @@ export const createDocument = async (
 };
 
 /**
- * Update a document by ID
- */
-export const updateDocument = async (
-    id: number,
-    data: Partial<CreateDocumentInput>
-): Promise<{ success: boolean; data: Document }> => {
-    return request<{ success: boolean; data: Document }>(`/documents/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-    });
-};
-
-/**
  * Delete a document by ID
  */
 export const deleteDocument = async (id: number): Promise<{ success: boolean; message: string }> => {
     return request<{ success: boolean; message: string }>(`/documents/${id}`, {
         method: 'DELETE',
     });
+};
+
+/**
+ * Check which document names already exist for a user
+ */
+export const checkDocumentNamesExist = async (
+    userId: number,
+    names: string[]
+): Promise<{ success: boolean; data: { existingNames: string[]; totalChecked: number; duplicatesFound: number } }> => {
+    return request<{ success: boolean; data: { existingNames: string[]; totalChecked: number; duplicatesFound: number } }>(
+        `/documents/user/${userId}/check-names`,
+        {
+            method: 'POST',
+            body: JSON.stringify({ names }),
+        }
+    );
 };
 

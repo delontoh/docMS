@@ -2,16 +2,20 @@ import { request } from './client';
 import type { Folder, CreateFolderInput, PaginatedResponse } from '@/types';
 
 /**
- * Get all folders with pagination
+ * Get folders by user ID with pagination
  */
-export const getFolders = async (
+export const getFoldersByUserId = async (
+    userId: number,
     params?: { page?: number; limit?: number }
 ): Promise<PaginatedResponse<Folder>> => {
     const queryParams = new URLSearchParams();
+
     if (params?.page) queryParams.set('page', params.page.toString());
     if (params?.limit) queryParams.set('limit', params.limit.toString());
+    
     const query = queryParams.toString();
-    return request<PaginatedResponse<Folder>>(`/folders${query ? `?${query}` : ''}`);
+
+    return request<PaginatedResponse<Folder>>(`/folders/user/${userId}${query ? `?${query}` : ''}`);
 };
 
 /**

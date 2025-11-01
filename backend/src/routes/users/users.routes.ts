@@ -12,6 +12,14 @@ const router = Router();
 router.get('/', usersController.getAllUsers);
 
 /**
+ * @route   GET /api/users/:userId/documents-folders
+ * @desc    Get documents and folders for a user with pagination (combined)
+ * @access  Public
+ * @query   page, limit, skip, take
+ */
+router.get('/:userId/documents-folders', usersController.getUserDocumentsAndFolders);
+
+/**
  * @route   GET /api/users/:id
  * @desc    Get a single user by ID
  * @access  Public

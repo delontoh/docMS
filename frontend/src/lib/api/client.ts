@@ -15,7 +15,8 @@ export const request = async <T>(endpoint: string, options: RequestInit = {}): P
 
     if (!response.ok) {
         const error = await response.json().catch(() => ({ message: 'Request failed' }));
-        throw new Error(error.message || `HTTP error! status: ${response.status}`);
+        const errorObj = { error: error.error || error.message || `HTTP error! status: ${response.status}` };
+        throw errorObj;
     }
 
     return response.json();

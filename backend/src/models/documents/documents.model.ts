@@ -1,4 +1,5 @@
 import { PrismaClient, Document } from '@prisma/client';
+import { formatFileSize } from '@utils/format.utils';
 
 const prisma = new PrismaClient();
 
@@ -57,7 +58,7 @@ export const getAllDocuments = async (params?: PaginationParams): Promise<Pagina
     const skip = params?.skip ?? (page - 1) * limit;
     const take = params?.take ?? limit;
 
-    const [data, total] = await Promise.all([
+    const [rawData, total] = await Promise.all([
         prisma.document.findMany({
             skip,
             take,
@@ -69,6 +70,12 @@ export const getAllDocuments = async (params?: PaginationParams): Promise<Pagina
         }),
         prisma.document.count(),
     ]);
+
+    // Format file_size for each document
+    const data = rawData.map((doc) => ({
+        ...doc,
+        file_size: formatFileSize(doc.file_size),
+    }));
 
     return {
         data,
@@ -88,7 +95,7 @@ export const getDocumentsByUserId = async (userId: number, params?: PaginationPa
     const skip = params?.skip ?? (page - 1) * limit;
     const take = params?.take ?? limit;
 
-    const [data, total] = await Promise.all([
+    const [rawData, total] = await Promise.all([
         prisma.document.findMany({
             where: { document_user_id: userId },
             skip,
@@ -103,6 +110,12 @@ export const getDocumentsByUserId = async (userId: number, params?: PaginationPa
             where: { document_user_id: userId },
         }),
     ]);
+
+    //Format file_size for each document
+    const data = rawData.map((doc) => ({
+        ...doc,
+        file_size: formatFileSize(doc.file_size),
+    }));
 
     return {
         data,

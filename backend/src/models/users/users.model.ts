@@ -1,4 +1,5 @@
 import { PrismaClient, User } from '@prisma/client';
+import { formatFileSize } from '@utils/format.utils';
 
 const prisma = new PrismaClient();
 
@@ -25,6 +26,17 @@ export type CreateUserInput = {
 export type UpdateUserInput = {
     email?: string;
     name?: string;
+};
+
+export type UserDocumentsAndFoldersResult = {
+    documents: any[];
+    folders: any[];
+    documentsTotal: number;
+    foldersTotal: number;
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
 };
 
 /**
@@ -101,6 +113,64 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 };
 
 /**
+ * Get documents and folders for a user with pagination
+ */
+export const getUserDocumentsAndFolders = async (userId: number, params?: PaginationParams): Promise<UserDocumentsAndFoldersResult> => {
+    const page = params?.page ?? 1;
+    const limit = params?.limit ?? 10;
+    const skip = params?.skip ?? (page - 1) * limit;
+    const take = params?.take ?? limit;
+
+    const [documents, folders, documentsTotal, foldersTotal] = await Promise.all([
+        prisma.document.findMany({
+            where: { document_user_id: userId },
+            skip,
+            take,
+            orderBy: { created_at: 'desc' },
+            include: {
+                created_by: true,
+                belong_to_folder: true,
+            },
+        }),
+        prisma.folder.findMany({
+            where: { folders_user_id: userId },
+            skip,
+            take,
+            orderBy: { created_at: 'desc' },
+            include: {
+                created_by: true,
+                documents: true,
+            },
+        }),
+        prisma.document.count({
+            where: { document_user_id: userId },
+        }),
+        prisma.folder.count({
+            where: { folders_user_id: userId },
+        }),
+    ]);
+
+    // Format file_size for each document
+    const formattedDocuments = documents.map((doc) => ({
+        ...doc,
+        file_size: formatFileSize(doc.file_size),
+    }));
+
+    const total = documentsTotal + foldersTotal;
+
+    return {
+        documents: formattedDocuments,
+        folders,
+        documentsTotal,
+        foldersTotal,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+    };
+};
+
+/**
  * Update a user by ID
  */
 export const updateUser = async (id: number, data: UpdateUserInput): Promise<User> => {
@@ -134,4 +204,3 @@ export const deleteManyUsers = async (ids: number[]): Promise<{ count: number }>
         where: { id: { in: ids } },
     });
 };
-
