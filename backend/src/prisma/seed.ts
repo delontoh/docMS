@@ -30,11 +30,17 @@ async function main() {
     const documents = await Promise.all(
         documentNames.map((docs) =>
             prisma.document.upsert({
-                where: { name: docs[0] },
+                where: { 
+                    name_document_user_id: {
+                        name: docs[0],
+                        document_user_id: user.id
+                    }
+                },
                 update: {},
                 create: { 
                     name: docs[0], 
                     file_size: `${Math.floor(Math.random() * 500) + 50} KB`, 
+                    file_type: 'document',
                     document_user_id: user.id, 
                 },
             })
@@ -62,6 +68,7 @@ async function main() {
                 update: {},
                 create: {
                     name,
+                    file_type: 'folder',
                     folders_user_id: user.id,
                 },
             })
@@ -85,11 +92,17 @@ async function main() {
         const createdDocs = await Promise.all(
             docs.map((docName) =>
                 prisma.document.upsert({
-                    where: { name: docName },
+                    where: { 
+                        name_document_user_id: {
+                            name: docName,
+                            document_user_id: user.id
+                        }
+                    },
                     update: {},
                     create: {
                         name: docName,
                         file_size: `${Math.floor(Math.random() * 500) + 50} KB`,
+                        file_type: 'document',
                         document_user_id: user.id,
                         folder_document_id: folder.id,
                     },

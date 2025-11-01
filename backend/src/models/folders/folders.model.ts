@@ -33,6 +33,7 @@ export const createFolder = async (data: CreateFolderInput): Promise<Folder> => 
     return prisma.folder.create({
         data: {
             name: data.name,
+            file_type: 'folder',
             folders_user_id: data.folders_user_id,
         },
         include: {

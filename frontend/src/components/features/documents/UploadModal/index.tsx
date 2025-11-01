@@ -56,7 +56,6 @@ const formatFileSize = (bytes: number): string => {
 
     const convertedSize = bytes / Math.pow(k, sizeIndex);
 
-    //Round to 2 decimal places, but show integer if it's a whole number
     const roundedSize = Math.round(convertedSize * 100) / 100;
     const formattedSize = roundedSize % 1 === 0 ? roundedSize.toString() : roundedSize.toFixed(2);
 
@@ -78,7 +77,6 @@ const validateFile = (file: File): string | null => {
     if (file.size > MAX_FILE_SIZE) {
         return `File size (${formatFileSize(file.size)}) exceeds the maximum limit of ${formatFileSize(MAX_FILE_SIZE)}.`;
     }
-
     return null;
 };
 
@@ -104,6 +102,7 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
         setIsDragging(false);
     }, []);
 
+    //Validate files and check for duplicate names
     const processFiles = useCallback((fileList: FileList | null) => {
         if (!fileList) return;
 
@@ -182,7 +181,7 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
         
         try {
             const duplicateCheckResponse = await checkDocumentNamesExist(userId, fileNames);
-            const existingNames = duplicateCheckResponse.data.existingNames;
+            const existingNames = duplicateCheckResponse?.data?.existingNames || [];
             if (existingNames.length > 0) {
                 setFiles((prev) =>
                     prev.map((fileItem) => {
@@ -209,7 +208,6 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
             console.error('Failed to check for duplicate names:', error); //Backend will still catch duplicates
         }
 
-        //Update files to 'uploading' status
         setFiles((prev) =>
             prev.map((fileItem) => {
                 const shouldUpload = filesToUpload.some((fileToUpload) => fileToUpload.id === fileItem.id);
@@ -221,7 +219,6 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
         for (const fileItem of filesToUpload) {
             try {
                 const fileSizeStr = `${Math.round(fileItem.file.size / 1024)} KB`;
-
                 const documentData: CreateDocumentInput = {
                     name: fileItem.file.name,
                     file_size: fileSizeStr,
@@ -232,7 +229,6 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                 await createDocument(documentData);
                 successFiles.push(fileItem.file.name);
 
-                //Update file status to success
                 setFiles((prev) =>
                     prev.map((f) => (f.id === fileItem.id ? { ...f, status: 'success' } : f))
                 );
@@ -248,8 +244,6 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                 }
                 
                 failedFiles.push(fileItem.file.name);
-
-                //Update file status to error
                 setFiles((prev) =>
                     prev.map((f) =>
                         f.id === fileItem.id ? { ...f, status: 'error', error: errorMessage } : f
@@ -261,7 +255,6 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
         setIsUploading(false);
         setUploadResults({ success: successFiles, failed: failedFiles });
 
-        // If there are successful uploads, refresh the list
         if (successFiles.length > 0 && onUploadSuccess) {
             onUploadSuccess();
         }

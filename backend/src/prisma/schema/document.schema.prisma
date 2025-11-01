@@ -2,6 +2,7 @@ model Document {
     id          Int      @id @default(autoincrement())
     name        String   @db.VarChar(191)
     file_size   String   @db.TinyText
+    file_type   String   @default("document")
     created_at  DateTime @default(now())
     updated_at  DateTime @updatedAt
     

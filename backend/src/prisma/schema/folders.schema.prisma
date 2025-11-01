@@ -1,6 +1,7 @@
 model Folder {
     id          Int      @id @default(autoincrement())
     name        String   @unique @db.VarChar(191)
+    file_type   String   @default("folder")
     created_at  DateTime @default(now())
     updated_at  DateTime @updatedAt
     documents   Document[]

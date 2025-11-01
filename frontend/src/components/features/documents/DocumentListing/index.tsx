@@ -41,6 +41,7 @@ import {
 } from '@/lib/api';
 import type { DocumentItem, FolderItem, Item } from '@/types';
 import UploadModal from '@/components/features/documents/UploadModal';
+import { formatDate } from '@/utils/date.utils';
 
 export default function DocumentListing() {
     const [items, setItems] = useState<Item[]>([]);
@@ -51,7 +52,6 @@ export default function DocumentListing() {
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
-    const [total, setTotal] = useState(0);
     const [anchorEl, setAnchorEl] = useState<{ element: HTMLElement; itemId: number } | null>(null);
     const [uploadModalOpen, setUploadModalOpen] = useState(false);
     const [userId, setUserId] = useState<number | null>(null);
@@ -61,8 +61,8 @@ export default function DocumentListing() {
         const fetchUserId = async () => {
             try {
                 const usersResponse = await getUsers({ page: 1, limit: 1 });
-                if (usersResponse.data.length > 0) {
-                    setUserId(usersResponse.data[0].id);
+                if (usersResponse?.data?.length > 0) {
+                    setUserId(usersResponse.data[0]?.id ?? null);
                 }
             } catch (err) {
                 console.error('Failed to fetch user:', err);
@@ -79,11 +79,32 @@ export default function DocumentListing() {
         }
     }, [totalPages]);
 
+    //Reset to page 1 if no data in other pages
+    useEffect(() => {
+        if (items.length === 0 && page > 1 && !loading) {
+            setPage(1);
+        }
+    }, [items.length, page, loading]);
+
+    //Calculate totalPages based on combined items response
+    const calculateTotalPages = useCallback((combined: Item[], responseTotalPages: number, currentPage: number) => {
+        if (combined.length === 0) {
+            if (currentPage === 1) {
+                return { totalPages: 1, page: 1 };
+            } else {
+                return { totalPages: 1, page: 1 };
+            }
+        } else if (currentPage > responseTotalPages) {
+            return { totalPages: responseTotalPages, page: responseTotalPages };
+        } else {
+            return { totalPages: responseTotalPages, page: currentPage };
+        }},[]
+    );
+
     //Fetch both documents and folders for the current user
     const fetchData = useCallback(async () => {
         if (!userId) {
             setItems([]);
-            setTotal(0);
             setTotalPages(1);
             setLoading(false);
             return;
@@ -95,33 +116,41 @@ export default function DocumentListing() {
 
             const response = await getUserDocumentsAndFolders(userId, { page, limit: rowsPerPage });
 
-            const documents: DocumentItem[] = response.documents.map((doc) => ({
+            const documents: DocumentItem[] = (response?.documents || []).map((doc) => ({
                 ...doc,
                 type: 'document' as const,
             }));
 
-            const folders: FolderItem[] = response.folders.map((folder) => ({
+            const folders: FolderItem[] = (response?.folders || []).map((folder) => ({
                 ...folder,
                 type: 'folder' as const,
             }));
 
-            //Combine both folders and documents (Sort by newest created date first with folders at the top)
+            //Combine both folders and documents
             const combined = [...documents, ...folders].sort((a, b) => {
                 if (a.type !== b.type) {
                     return a.type === 'folder' ? -1 : 1;
                 }
-                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                return dateB - dateA;
             });
 
             setItems(combined);
-            setTotal(response.total);
-            setTotalPages(response.totalPages || 1);
+            const responseTotalPages = response?.totalPages || 1;
+
+            //Set pages
+            const { totalPages: newTotalPages, page: newPage } = calculateTotalPages(combined, responseTotalPages, page);
+            setTotalPages(newTotalPages);
+            if (newPage !== page) {
+                setPage(newPage);
+            }
 
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load documents');
             setItems([]);
-            setTotal(0);
             setTotalPages(1);
+            setPage(1);
         } finally {
             setLoading(false);
         }
@@ -133,12 +162,12 @@ export default function DocumentListing() {
         }
     }, [fetchData, userId]);
 
-    // Filter items by search query
+    //Filter items by search query
     const filteredItems = useMemo(() => {
         if (!searchQuery.trim()) return items;
         
         const query = searchQuery.toLowerCase();
-        return items.filter((item) => item.name.toLowerCase().includes(query));
+        return items.filter((item) => item?.name?.toLowerCase().includes(query));
     }, [items, searchQuery]);
 
     const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,7 +203,6 @@ export default function DocumentListing() {
             } else {
                 await deleteFolder(itemId);
             }
-            // Refresh the list
             setItems((prev) => prev.filter((item) => item.id !== itemId));
             setSelectedItems((prev) => {
                 const newSet = new Set(prev);
@@ -187,14 +215,6 @@ export default function DocumentListing() {
         }
     };
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-        });
-    };
 
     const isAllSelected = filteredItems.length > 0 && filteredItems.every((item) => selectedItems.has(item.id));
     const isIndeterminate = selectedItems.size > 0 && selectedItems.size < filteredItems.length;
@@ -328,7 +348,7 @@ export default function DocumentListing() {
                                             ) : (
                                                 <DescriptionIcon sx={{ color: '#1976d2', fontSize: 20 }} />
                                             )}
-                                            <Typography variant="body2">{item.name}</Typography>
+                                            <Typography variant="body2">{item?.name || '-'}</Typography>
                                         </Box>
                                     </TableCell>
                                     <TableCell>
@@ -339,7 +359,9 @@ export default function DocumentListing() {
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
-                                        <Typography variant="body2">{formatDate(item.created_at)}</Typography>
+                                        <Typography variant="body2">
+                                            {item.created_at ? formatDate(item.created_at) : '-'}
+                                        </Typography>
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2">
@@ -383,18 +405,19 @@ export default function DocumentListing() {
                     <Typography variant="body2">rows per page</Typography>
                 </Box>
 
-                {totalPages > 0 && (
+                {totalPages > 0 && items.length > 0 && (
                     <Pagination
                         count={totalPages}
                         page={Math.min(page, totalPages)}
                         onChange={(_, newPage) => {
-                            if (newPage <= totalPages && newPage >= 1) {
+                            if (newPage <= totalPages && newPage >= 1 && newPage > 0) {
                                 setPage(newPage);
                             }
                         }}
                         color="primary"
                         showFirstButton
                         showLastButton
+                        disabled={items.length === 0}
                     />
                 )}
             </Box>
@@ -410,8 +433,8 @@ export default function DocumentListing() {
                     <>
                         <MenuItem
                             onClick={() => {
-                                const item = items.find((i) => i.id === anchorEl.itemId);
-                                if (item) {
+                                const item = items.find((i) => i.id === anchorEl?.itemId);
+                                if (item && anchorEl) {
                                     handleDelete(anchorEl.itemId, item.type);
                                 }
                             }}

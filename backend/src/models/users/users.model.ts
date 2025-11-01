@@ -1,5 +1,6 @@
 import { PrismaClient, User } from '@prisma/client';
 import { formatFileSize } from '@utils/format.utils';
+import { combineAndSortFiles } from '@utils/combineAndSortFiles.utils';
 
 const prisma = new PrismaClient();
 
@@ -82,27 +83,7 @@ export const getUserDocumentsAndFolders = async (userId: number, params?: Pagina
     const skip = params?.skip ?? (page - 1) * limit;
     const take = params?.take ?? limit;
 
-    const [documents, folders, documentsTotal, foldersTotal] = await Promise.all([
-        prisma.document.findMany({
-            where: { document_user_id: userId },
-            skip,
-            take,
-            orderBy: { created_at: 'desc' },
-            include: {
-                created_by: true,
-                belong_to_folder: true,
-            },
-        }),
-        prisma.folder.findMany({
-            where: { folders_user_id: userId },
-            skip,
-            take,
-            orderBy: { created_at: 'desc' },
-            include: {
-                created_by: true,
-                documents: true,
-            },
-        }),
+    const [documentsTotal, foldersTotal] = await Promise.all([
         prisma.document.count({
             where: { document_user_id: userId },
         }),
@@ -111,22 +92,60 @@ export const getUserDocumentsAndFolders = async (userId: number, params?: Pagina
         }),
     ]);
 
-    // Format file_size for each document
-    const formattedDocuments = documents.map((doc) => ({
+    const total = documentsTotal + foldersTotal;
+    const calculatedTotalPages = total > 0 ? Math.ceil(total / limit) : 1;
+    const itemsNeeded = page * limit;
+
+    const [allDocuments, allFolders] = await Promise.all([
+        prisma.document.findMany({
+            where: { document_user_id: userId },
+            take: Math.min(itemsNeeded, documentsTotal),
+            orderBy: { created_at: 'desc' },
+            include: {
+                created_by: true,
+                belong_to_folder: true,
+            },
+        }),
+
+        prisma.folder.findMany({
+            where: { folders_user_id: userId },
+            take: Math.min(itemsNeeded, foldersTotal),
+            orderBy: { created_at: 'desc' },
+            include: {
+                created_by: true,
+                documents: true,
+            },
+        }),
+    ]);
+
+    //Format file size for each document
+    const formattedAllDocuments = allDocuments.map((doc) => ({
         ...doc,
         file_size: formatFileSize(doc.file_size),
+        file_type: (doc as any).file_type || 'document',
     }));
 
-    const total = documentsTotal + foldersTotal;
+    const foldersWithType = allFolders.map((folder) => ({
+        ...folder,
+        file_type: (folder as any).file_type || 'folder',
+    }));
+
+    const combined = combineAndSortFiles(formattedAllDocuments, foldersWithType);
+
+    //Apply pagination to combined array
+    const paginatedItems = combined.slice(skip, skip + take);
+    //Return documents and folders separately
+    const documents = paginatedItems.filter((item) => item.file_type === 'document') as any[];
+    const folders = paginatedItems.filter((item) => item.file_type === 'folder') as any[];
 
     return {
-        documents: formattedDocuments,
+        documents,
         folders,
         documentsTotal,
         foldersTotal,
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
+        totalPages: calculatedTotalPages,
     };
 };

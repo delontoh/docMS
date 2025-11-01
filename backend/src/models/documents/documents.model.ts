@@ -39,6 +39,7 @@ export const createDocument = async (data: CreateDocumentInput): Promise<Documen
         data: {
             name: data.name,
             file_size: data.file_size,
+            file_type: 'document',
             document_user_id: data.document_user_id,
             folder_document_id: data.folder_document_id ?? null,
         },
