@@ -5,14 +5,3 @@ export type User = {
     created_at: string;
     updated_at: string;
 };
-
-export type CreateUserInput = {
-    email: string;
-    name: string;
-};
-
-export type UpdateUserInput = {
-    email?: string;
-    name?: string;
-};
-

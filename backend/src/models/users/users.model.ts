@@ -10,24 +10,6 @@ export type PaginationParams = {
     take?: number;
 };
 
-export type PaginatedResult<T> = {
-    data: T[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-};
-
-export type CreateUserInput = {
-    email: string;
-    name: string;
-};
-
-export type UpdateUserInput = {
-    email?: string;
-    name?: string;
-};
-
 export type UserDocumentsAndFoldersResult = {
     documents: any[];
     folders: any[];
@@ -39,20 +21,12 @@ export type UserDocumentsAndFoldersResult = {
     totalPages: number;
 };
 
-/**
- * Create a new user
- */
-export const createUser = async (data: CreateUserInput): Promise<User> => {
-    return prisma.user.create({
-        data: {
-            email: data.email,
-            name: data.name,
-        },
-        include: {
-            documents: true,
-            folders: true,
-        },
-    });
+export type PaginatedResult<T> = {
+    data: T[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
 };
 
 /**
@@ -92,19 +66,6 @@ export const getAllUsers = async (params?: PaginationParams): Promise<PaginatedR
 export const getUserById = async (id: number): Promise<User | null> => {
     return prisma.user.findUnique({
         where: { id },
-        include: {
-            documents: true,
-            folders: true,
-        },
-    });
-};
-
-/**
- * Get a user by email
- */
-export const getUserByEmail = async (email: string): Promise<User | null> => {
-    return prisma.user.findUnique({
-        where: { email },
         include: {
             documents: true,
             folders: true,
@@ -168,39 +129,4 @@ export const getUserDocumentsAndFolders = async (userId: number, params?: Pagina
         limit,
         totalPages: Math.ceil(total / limit),
     };
-};
-
-/**
- * Update a user by ID
- */
-export const updateUser = async (id: number, data: UpdateUserInput): Promise<User> => {
-    return prisma.user.update({
-        where: { id },
-        data: {
-            email: data.email,
-            name: data.name,
-        },
-        include: {
-            documents: true,
-            folders: true,
-        },
-    });
-};
-
-/**
- * Delete a user by ID
- */
-export const deleteUser = async (id: number): Promise<User> => {
-    return prisma.user.delete({
-        where: { id },
-    });
-};
-
-/**
- * Delete multiple users by IDs
- */
-export const deleteManyUsers = async (ids: number[]): Promise<{ count: number }> => {
-    return prisma.user.deleteMany({
-        where: { id: { in: ids } },
-    });
 };

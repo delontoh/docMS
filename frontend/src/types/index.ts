@@ -11,9 +11,7 @@ export type {
 } from './folder.types';
 
 export type {
-    User,
-    CreateUserInput,
-    UpdateUserInput,
+    User
 } from './user.types';
 
 export type { PaginatedResponse } from './common.types';
