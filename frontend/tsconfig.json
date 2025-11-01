@@ -11,6 +11,7 @@
         "baseUrl": ".",
         "paths": {
             "@/components/*": ["src/components/*"],
+            "@/lib/api": ["src/lib/api"],
             "@/lib/*": ["src/lib/*"],
             "@/features/*": ["src/features/*"],
             "@/hooks/*": ["src/hooks/*"],
