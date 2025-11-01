@@ -20,8 +20,7 @@ npm run prisma:generate
 npm run prisma:migrate -- --name init
 npm run prisma:seed
 npm run dev
-# Server at http://localhost:3000
-# REST API at http://localhost:3000/api
+# Server at http://localhost:4000
 ```
 
 REST API Endpoints:

@@ -10,11 +10,10 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     try {
         const { email, name } = req.body;
 
-        // Validation
         if (!email || !name) {
             res.status(400).json({
                 success: false,
-                message: 'Missing required fields: email and name are required',
+                message: 'Missing required fields: { email, name }',
             });
             return;
         }
@@ -31,8 +30,9 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
             message: 'User created successfully',
             data: user,
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'createUser: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to create user',
@@ -66,8 +66,9 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
             message: 'Users retrieved successfully',
             ...result,
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'getAllUsers: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to retrieve users',
@@ -107,8 +108,9 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
             message: 'User retrieved successfully',
             data: user,
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'getUserById: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to retrieve user',
@@ -147,12 +149,12 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
             message: 'User updated successfully',
             data: user,
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'updateUser: Error';
         
-        // Handle Prisma not found error
         if (errorMessage.includes('Record to update does not exist')) {
-            res.status(404).json({
+            res.status(500).json({
                 success: false,
                 message: 'User not found',
             });
@@ -189,12 +191,12 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
             success: true,
             message: 'User deleted successfully',
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'deleteUser: Error';
         
-        // Handle Prisma not found error
         if (errorMessage.includes('Record to delete does not exist')) {
-            res.status(404).json({
+            res.status(500).json({
                 success: false,
                 message: 'User not found',
             });
@@ -243,8 +245,9 @@ export const deleteManyUsers = async (req: Request, res: Response): Promise<void
             message: `${result.count} user(s) deleted successfully`,
             data: { deletedCount: result.count },
         });
+        
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'deleteManyUsers: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to delete users',

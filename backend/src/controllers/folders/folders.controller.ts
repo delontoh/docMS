@@ -10,11 +10,10 @@ export const createFolder = async (req: Request, res: Response): Promise<void> =
     try {
         const { name, folders_user_id } = req.body;
 
-        // Validation
         if (!name || !folders_user_id) {
             res.status(400).json({
                 success: false,
-                message: 'Missing required fields: name and folders_user_id are required',
+                message: 'Missing required fields: { name, folders_user_id }',
             });
             return;
         }
@@ -31,8 +30,9 @@ export const createFolder = async (req: Request, res: Response): Promise<void> =
             message: 'Folder created successfully',
             data: folder,
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'createFolder: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to create folder',
@@ -66,8 +66,9 @@ export const getAllFolders = async (req: Request, res: Response): Promise<void> 
             message: 'Folders retrieved successfully',
             ...result,
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'getAllFolders: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to retrieve folders',
@@ -111,8 +112,9 @@ export const getFoldersByUserId = async (req: Request, res: Response): Promise<v
             message: 'Folders retrieved successfully',
             ...result,
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'getFoldersByUserId: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to retrieve folders',
@@ -140,7 +142,7 @@ export const getFolderById = async (req: Request, res: Response): Promise<void> 
         const folder = await foldersModel.getFolderById(id);
 
         if (!folder) {
-            res.status(404).json({
+            res.status(500).json({
                 success: false,
                 message: 'Folder not found',
             });
@@ -152,8 +154,9 @@ export const getFolderById = async (req: Request, res: Response): Promise<void> 
             message: 'Folder retrieved successfully',
             data: folder,
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'getFolderById: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to retrieve folder',
@@ -191,12 +194,12 @@ export const updateFolder = async (req: Request, res: Response): Promise<void> =
             message: 'Folder updated successfully',
             data: folder,
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'updateFolder: Error';
         
-        // Handle Prisma not found error
         if (errorMessage.includes('Record to update does not exist')) {
-            res.status(404).json({
+            res.status(500).json({
                 success: false,
                 message: 'Folder not found',
             });
@@ -233,12 +236,12 @@ export const deleteFolder = async (req: Request, res: Response): Promise<void> =
             success: true,
             message: 'Folder deleted successfully',
         });
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         
-        // Handle Prisma not found error
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'deleteFolder: Error';
+        
         if (errorMessage.includes('Record to delete does not exist')) {
-            res.status(404).json({
+            res.status(500).json({
                 success: false,
                 message: 'Folder not found',
             });
@@ -287,8 +290,9 @@ export const deleteManyFolders = async (req: Request, res: Response): Promise<vo
             message: `${result.count} folder(s) deleted successfully`,
             data: { deletedCount: result.count },
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'deleteManyFolders: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to delete folders',

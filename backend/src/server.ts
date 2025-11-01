@@ -8,7 +8,7 @@ async function start() {
     app.use(cors());
     app.use(bodyParser.json());
 
-    // REST API Routes
+    //API Routes
     const documentsRoutes = (await import('@routes/documents/documents.routes')).default;
     const foldersRoutes = (await import('@routes/folders/folders.routes')).default;
 
@@ -20,7 +20,7 @@ async function start() {
         res.json({ status: 'ok', timestamp: new Date().toISOString() });
     });
 
-    const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+    const port = process.env.PORT ? Number(process.env.PORT) : 4000;
     app.listen(port, () => {
         console.log('\nO===> Start Environment On: ' + app.get('env') + '\n');
         console.log(`Listening On Port: ${port} <===0\n`);

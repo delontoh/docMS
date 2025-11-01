@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import {
     Box,
     Card,
+    Container,
     Typography,
     TextField,
     InputAdornment,
@@ -29,8 +30,8 @@ import {
     Search as SearchIcon,
     Upload as UploadIcon,
     Add as AddIcon,
-    Folder as FolderIcon,
-    Description as DescriptionIcon,
+    FolderOutlined as FolderIcon,
+    DescriptionOutlined as DescriptionIcon,
     MoreHoriz as MoreHorizIcon,
 } from '@mui/icons-material';
 import {
@@ -58,7 +59,14 @@ export default function DocumentsPage() {
     const [total, setTotal] = useState(0);
     const [anchorEl, setAnchorEl] = useState<{ element: HTMLElement; itemId: number } | null>(null);
 
-    // Fetch documents and folders
+    //Ensure valid page range when totalPages changes
+    useEffect(() => {
+        if (totalPages > 0 && page > totalPages) {
+            setPage(1);
+        }
+    }, [totalPages]);
+
+    //Fetch both documents and folders
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -80,14 +88,19 @@ export default function DocumentsPage() {
                     type: 'folder' as const,
                 }));
 
-                // Combine and sort by date (newest first)
-                const combined = [...documents, ...folders].sort(
-                    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-                );
+                //Combine both folders and documents (Sort by newest created date first with folders at the top)
+                const combined = [...documents, ...folders].sort((a, b) => {
+                    if (a.type !== b.type) {
+                        return a.type === 'folder' ? -1 : 1;
+                    }
+                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                });
 
                 setItems(combined);
                 setTotal(documentsResponse.total + foldersResponse.total);
-                setTotalPages(Math.ceil((documentsResponse.total + foldersResponse.total) / rowsPerPage));
+                const calculatedTotalPages = Math.floor((documentsResponse.total + foldersResponse.total) / rowsPerPage) || 1;
+                setTotalPages(calculatedTotalPages);
+
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to load documents');
             } finally {
@@ -164,36 +177,20 @@ export default function DocumentsPage() {
     const isIndeterminate = selectedItems.size > 0 && selectedItems.size < filteredItems.length;
 
     return (
-        <Box sx={{ p: 3, backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-            <Typography variant="h4" component="h1" sx={{ mb: 3, fontWeight: 600 }}>
-                Frontend
-            </Typography>
+        <Box sx={{ backgroundColor: '#f5f5f5', minHeight: '100vh', py: 4 }}>
+            <Container maxWidth="lg">
+                <Typography variant="h4" component="h1" sx={{ mb: 3, fontWeight: 600 }}>
+                    Document Management System
+                </Typography>
 
-            <Card sx={{ p: 3, borderRadius: 2, boxShadow: 2 }}>
-                {/* Header Section */}
+                <Card sx={{ p: 3, borderRadius: 2, boxShadow: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
                         Documents
                     </Typography>
 
+                    {/* Files and folders buttons */}
                     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                        {/* Search Bar */}
-                        <TextField
-                            placeholder="Search"
-                            size="small"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <SearchIcon />
-                                    </InputAdornment>
-                                ),
-                            }}
-                            sx={{ width: 250 }}
-                        />
-
-                        {/* Upload Files Button */}
                         <Button
                             variant="outlined"
                             startIcon={<UploadIcon />}
@@ -209,7 +206,6 @@ export default function DocumentsPage() {
                             Upload files
                         </Button>
 
-                        {/* Add New Folder Button */}
                         <Button
                             variant="contained"
                             startIcon={<AddIcon />}
@@ -224,14 +220,35 @@ export default function DocumentsPage() {
                         </Button>
                     </Box>
                 </Box>
-
+                
+                {/* Search Bar */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                    <TextField
+                        placeholder="Search"
+                        size="small"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        slotProps={{
+                            input: {
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <SearchIcon />
+                                    </InputAdornment>
+                                )
+                            }
+                        }}
+                        sx={{ width: 250 }}
+                    />
+                </Box>
+                
+                {/* Handle error */}
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
                         {error}
                     </Alert>
                 )}
 
-                {/* Table */}
+                {/* Table listing view */}
                 <TableContainer component={Paper} sx={{ borderRadius: 1 }}>
                     <Table>
                         <TableHead>
@@ -255,6 +272,7 @@ export default function DocumentsPage() {
                                 <TableCell sx={{ color: 'white', width: 60 }}></TableCell>
                             </TableRow>
                         </TableHead>
+
                         <TableBody>
                             {loading ? (
                                 <TableRow>
@@ -323,9 +341,10 @@ export default function DocumentsPage() {
                                 ))
                             )}
                         </TableBody>
+
                     </Table>
                 </TableContainer>
-
+                
                 {/* Pagination */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -347,40 +366,46 @@ export default function DocumentsPage() {
                         <Typography variant="body2">rows per page</Typography>
                     </Box>
 
-                    <Pagination
-                        count={totalPages}
-                        page={page}
-                        onChange={(_, newPage) => setPage(newPage)}
-                        color="primary"
-                        showFirstButton
-                        showLastButton
-                    />
-                </Box>
-            </Card>
-
-            {/* Action Menu */}
-            <Menu
-                anchorEl={anchorEl?.element}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-            >
-                {anchorEl && (
-                    <>
-                        <MenuItem
-                            onClick={() => {
-                                const item = items.find((i) => i.id === anchorEl.itemId);
-                                if (item) {
-                                    handleDelete(anchorEl.itemId, item.type);
+                    {totalPages > 0 && (
+                        <Pagination
+                            count={totalPages}
+                            page={Math.min(page, totalPages)}
+                            onChange={(_, newPage) => {
+                                if (newPage <= totalPages && newPage >= 1) {
+                                    setPage(newPage);
                                 }
                             }}
-                        >
-                            Delete
-                        </MenuItem>
-                    </>
-                )}
-            </Menu>
+                            color="primary"
+                            showFirstButton
+                            showLastButton
+                        />
+                    )}
+                </Box>
+                </Card>
+
+                <Menu
+                    anchorEl={anchorEl?.element}
+                    open={Boolean(anchorEl)}
+                    onClose={handleMenuClose}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                    {anchorEl && (
+                        <>
+                            <MenuItem
+                                onClick={() => {
+                                    const item = items.find((i) => i.id === anchorEl.itemId);
+                                    if (item) {
+                                        handleDelete(anchorEl.itemId, item.type);
+                                    }
+                                }}
+                            >
+                                Delete
+                            </MenuItem>
+                        </>
+                    )}
+                </Menu>
+            </Container>
         </Box>
     );
 }

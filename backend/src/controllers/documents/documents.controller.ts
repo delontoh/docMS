@@ -10,11 +10,10 @@ export const createDocument = async (req: Request, res: Response): Promise<void>
     try {
         const { name, file_size, document_user_id, folder_document_id } = req.body;
 
-        // Validation
         if (!name || !file_size || !document_user_id) {
             res.status(400).json({
                 success: false,
-                message: 'Missing required fields: name, file_size, and document_user_id are required',
+                message: 'Missing required fields: { name, file_size, document_user_id }',
             });
             return;
         }
@@ -33,8 +32,9 @@ export const createDocument = async (req: Request, res: Response): Promise<void>
             message: 'Document created successfully',
             data: document,
         });
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'createDocument: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to create document',
@@ -68,8 +68,9 @@ export const getAllDocuments = async (req: Request, res: Response): Promise<void
             message: 'Documents retrieved successfully',
             ...result,
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'getAllDocuments: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to retrieve documents',
@@ -113,8 +114,9 @@ export const getDocumentsByUserId = async (req: Request, res: Response): Promise
             message: 'Documents retrieved successfully',
             ...result,
         });
+        
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'getDocumentsByUserId: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to retrieve documents',
@@ -158,8 +160,9 @@ export const getDocumentsByFolderId = async (req: Request, res: Response): Promi
             message: 'Documents retrieved successfully',
             ...result,
         });
+        
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'getDocumentsByFolderId: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to retrieve documents',
@@ -187,7 +190,7 @@ export const getDocumentById = async (req: Request, res: Response): Promise<void
         const document = await documentsModel.getDocumentById(id);
 
         if (!document) {
-            res.status(404).json({
+            res.status(500).json({
                 success: false,
                 message: 'Document not found',
             });
@@ -199,8 +202,9 @@ export const getDocumentById = async (req: Request, res: Response): Promise<void
             message: 'Document retrieved successfully',
             data: document,
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'getDocumentById: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to retrieve document',
@@ -240,12 +244,13 @@ export const updateDocument = async (req: Request, res: Response): Promise<void>
             message: 'Document updated successfully',
             data: document,
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'updateDocument: Error';
         
-        // Handle Prisma not found error
+        //Handle Prisma not found error
         if (errorMessage.includes('Record to update does not exist')) {
-            res.status(404).json({
+            res.status(500).json({
                 success: false,
                 message: 'Document not found',
             });
@@ -282,12 +287,12 @@ export const deleteDocument = async (req: Request, res: Response): Promise<void>
             success: true,
             message: 'Document deleted successfully',
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'deleteDocument: Error';
         
-        // Handle Prisma not found error
         if (errorMessage.includes('Record to delete does not exist')) {
-            res.status(404).json({
+            res.status(500).json({
                 success: false,
                 message: 'Document not found',
             });
@@ -336,8 +341,9 @@ export const deleteManyDocuments = async (req: Request, res: Response): Promise<
             message: `${result.count} document(s) deleted successfully`,
             data: { deletedCount: result.count },
         });
+
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'deleteManyDocuments: Error';
         res.status(500).json({
             success: false,
             message: 'Failed to delete documents',

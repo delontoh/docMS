@@ -76,10 +76,7 @@ export const getAllFolders = async (params?: PaginationParams): Promise<Paginate
 /**
  * Get folders by user ID with pagination
  */
-export const getFoldersByUserId = async (
-    userId: number,
-    params?: PaginationParams
-): Promise<PaginatedResult<Folder>> => {
+export const getFoldersByUserId = async (userId: number, params?: PaginationParams): Promise<PaginatedResult<Folder>> => {
     const page = params?.page ?? 1;
     const limit = params?.limit ?? 10;
     const skip = params?.skip ?? (page - 1) * limit;

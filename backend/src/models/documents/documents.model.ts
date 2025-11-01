@@ -82,10 +82,7 @@ export const getAllDocuments = async (params?: PaginationParams): Promise<Pagina
 /**
  * Get documents by user ID with pagination
  */
-export const getDocumentsByUserId = async (
-    userId: number,
-    params?: PaginationParams
-): Promise<PaginatedResult<Document>> => {
+export const getDocumentsByUserId = async (userId: number, params?: PaginationParams): Promise<PaginatedResult<Document>> => {
     const page = params?.page ?? 1;
     const limit = params?.limit ?? 10;
     const skip = params?.skip ?? (page - 1) * limit;
@@ -119,10 +116,7 @@ export const getDocumentsByUserId = async (
 /**
  * Get documents by folder ID with pagination
  */
-export const getDocumentsByFolderId = async (
-    folderId: number,
-    params?: PaginationParams
-): Promise<PaginatedResult<Document>> => {
+export const getDocumentsByFolderId = async (folderId: number, params?: PaginationParams): Promise<PaginatedResult<Document>> => {
     const page = params?.page ?? 1;
     const limit = params?.limit ?? 10;
     const skip = params?.skip ?? (page - 1) * limit;
