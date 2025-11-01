@@ -57,3 +57,13 @@ export const deleteFolder = async (id: number): Promise<{ success: boolean; mess
     });
 };
 
+/**
+ * Delete multiple folders by IDs
+ */
+export const deleteManyFolders = async (ids: number[]): Promise<{ success: boolean; message: string; data: { deletedCount: number } }> => {
+    return request<{ success: boolean; message: string; data: { deletedCount: number } }>('/folders', {
+        method: 'DELETE',
+        body: JSON.stringify({ ids }),
+    });
+};
+

@@ -49,6 +49,16 @@ export const deleteDocument = async (id: number): Promise<{ success: boolean; me
 };
 
 /**
+ * Delete multiple documents by IDs
+ */
+export const deleteManyDocuments = async (ids: number[]): Promise<{ success: boolean; message: string; data: { deletedCount: number } }> => {
+    return request<{ success: boolean; message: string; data: { deletedCount: number } }>('/documents', {
+        method: 'DELETE',
+        body: JSON.stringify({ ids }),
+    });
+};
+
+/**
  * Check which document names already exist for a user
  */
 export const checkDocumentNamesExist = async (
