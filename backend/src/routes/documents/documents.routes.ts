@@ -6,7 +6,6 @@ const router = Router();
 /**
  * @route   POST /api/documents
  * @desc    Create a new document
- * @access  Public
  */
 router.post('/', documentsController.createDocument);
 
@@ -14,7 +13,6 @@ router.post('/', documentsController.createDocument);
 /**
  * @route   POST /api/documents/user/:userId/check-names
  * @desc    Check duplicate document names for a user
- * @access  Public
  * @body    { names: ["file1.pdf", "file2.docx"] }
  */
 router.post('/user/:userId/check-names', documentsController.checkDocumentNamesExist);
@@ -35,14 +33,12 @@ router.put('/assign-folder', documentsController.assignDocumentsToFolder);
 /**
  * @route   DELETE /api/documents/:id
  * @desc    Delete a document by ID
- * @access  Public
  */
 router.delete('/:id', documentsController.deleteDocument);
 
 /**
  * @route   DELETE /api/documents
  * @desc    Delete multiple documents by IDs
- * @access  Public
  * @body    { ids: [1, 2, 3] }
  */
 router.delete('/', documentsController.deleteManyDocuments);

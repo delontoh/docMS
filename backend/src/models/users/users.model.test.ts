@@ -29,7 +29,7 @@ describe('Users Model', () => {
     });
 
     describe('getAllUsers', () => {
-        it('should return paginated users with default pagination', async () => {
+        it('should return all users as an array', async () => {
             const mockUsers = [
                 {
                     id: 1,
@@ -42,56 +42,26 @@ describe('Users Model', () => {
             ];
 
             mockPrismaInstance.user.findMany.mockResolvedValue(mockUsers);
-            mockPrismaInstance.user.count.mockResolvedValue(1);
 
             const result = await getAllUsers();
 
             expect(mockPrismaInstance.user.findMany).toHaveBeenCalledWith({
-                skip: 0,
-                take: 10,
                 orderBy: { created_at: 'desc' },
                 include: {
                     documents: true,
                     folders: true,
                 },
             });
-            expect(mockPrismaInstance.user.count).toHaveBeenCalled();
-            expect(result).toEqual({
-                data: mockUsers,
-                total: 1,
-                page: 1,
-                limit: 10,
-                totalPages: 1,
-            });
+            expect(result).toEqual(mockUsers);
         });
 
-        it('should handle custom pagination parameters', async () => {
-            const mockUsers = [
-                {
-                    id: 1,
-                    name: 'User 1',
-                    email: 'user1@example.com',
-                    created_at: new Date(),
-                    documents: [],
-                    folders: [],
-                },
-            ];
+        it('should return empty array when no users exist', async () => {
+            mockPrismaInstance.user.findMany.mockResolvedValue([]);
 
-            mockPrismaInstance.user.findMany.mockResolvedValue(mockUsers);
-            mockPrismaInstance.user.count.mockResolvedValue(25);
+            const result = await getAllUsers();
 
-            const result = await getAllUsers({ page: 2, limit: 10 });
-
-            expect(mockPrismaInstance.user.findMany).toHaveBeenCalledWith({
-                skip: 10,
-                take: 10,
-                orderBy: { created_at: 'desc' },
-                include: {
-                    documents: true,
-                    folders: true,
-                },
-            });
-            expect(result.totalPages).toBe(3); // Math.ceil(25 / 10) = 3
+            expect(mockPrismaInstance.user.findMany).toHaveBeenCalled();
+            expect(result).toEqual([]);
         });
     });
 

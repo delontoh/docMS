@@ -1,18 +1,11 @@
 import { request } from './client';
-import type { User, PaginatedResponse, Document, Folder } from '@/types';
+import type { User, Document, Folder } from '@/types';
 
 /**
- * Get all users with pagination
+ * Get all users
  */
-export const getUsers = async (params?: { page?: number; limit?: number }): Promise<PaginatedResponse<User>> => {
-    const queryParams = new URLSearchParams();
-
-    if (params?.page) queryParams.set('page', params.page.toString());
-    if (params?.limit) queryParams.set('limit', params.limit.toString());
-
-    const query = queryParams.toString();
-    
-    return request<PaginatedResponse<User>>(`/users${query ? `?${query}` : ''}`);
+export const getUsers = async (): Promise<User[]> => {
+    return request<User[]>(`/users`);
 };
 
 /**

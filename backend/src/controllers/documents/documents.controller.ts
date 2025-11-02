@@ -39,7 +39,8 @@ export const createDocument = async (req: Request, res: Response): Promise<void>
 
         //Handle duplicate document names for same user (Prisma error messages)
         if (errorMessage.includes('Unique constraint') || errorMessage.includes('P2002')) {
-            errorMessage = `A document with the name "${name}" already exists for this user.`;
+            const documentName = req.body?.name || 'unknown';
+            errorMessage = `A document with the name "${documentName}" already exists for this user.`;
             statusCode = 500;
         }
 

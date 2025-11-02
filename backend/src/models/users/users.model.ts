@@ -39,34 +39,18 @@ export type PaginatedResult<T> = {
 };
 
 /**
- * Get all users with pagination
+ * Get all users (returns array since only one user exists in seeded data)
  */
-export const getAllUsers = async (params?: PaginationParams): Promise<PaginatedResult<User>> => {
-    const page = params?.page ?? 1;
-    const limit = params?.limit ?? 10;
-    const skip = params?.skip ?? (page - 1) * limit;
-    const take = params?.take ?? limit;
+export const getAllUsers = async (): Promise<User[]> => {
+    const users = await prisma.user.findMany({
+        orderBy: { created_at: 'desc' },
+        include: {
+            documents: true,
+            folders: true,
+        },
+    });
 
-    const [data, total] = await Promise.all([
-        prisma.user.findMany({
-            skip,
-            take,
-            orderBy: { created_at: 'desc' },
-            include: {
-                documents: true,
-                folders: true,
-            },
-        }),
-        prisma.user.count(),
-    ]);
-
-    return {
-        data,
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-    };
+    return users;
 };
 
 /**

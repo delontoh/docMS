@@ -3,29 +3,17 @@ import * as usersModel from '@models/users/users.model';
 import type { PaginationParams, SearchParams } from '@models/users/users.model';
 
 /**
- * Get all users with pagination
- * GET /users?page=1&limit=10
+ * Get all users
+ * GET /users
  */
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
     try {
-        const page = req.query.page ? Number(req.query.page) : undefined;
-        const limit = req.query.limit ? Number(req.query.limit) : undefined;
-        const skip = req.query.skip ? Number(req.query.skip) : undefined;
-        const take = req.query.take ? Number(req.query.take) : undefined;
-
-        const params: PaginationParams = {
-            page,
-            limit,
-            skip,
-            take,
-        };
-
-        const result = await usersModel.getAllUsers(params);
+        const users = await usersModel.getAllUsers();
 
         res.status(200).json({
             success: true,
             message: 'Users retrieved successfully',
-            ...result,
+            data: users,
         });
 
     } catch (error: unknown) {

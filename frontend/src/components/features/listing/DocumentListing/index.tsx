@@ -91,9 +91,9 @@ export default function DocumentListing() {
     useEffect(() => {
         const fetchUserId = async () => {
             try {
-                const usersResponse = await getUsers({ page: 1, limit: 1 });
-                if (usersResponse?.data?.length > 0) {
-                    setUserId(usersResponse.data[0]?.id ?? null);
+                const users = await getUsers();
+                if (users?.length > 0) {
+                    setUserId(users[0]?.id ?? null);
                 }
             } catch (err) {
                 console.error('Failed to fetch user:', err);

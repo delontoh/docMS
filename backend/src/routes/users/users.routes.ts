@@ -5,16 +5,13 @@ const router = Router();
 
 /**
  * @route   GET /api/users
- * @desc    Get all users with pagination
- * @access  Public
- * @query   page, limit, skip, take
+ * @desc    Get all users
  */
 router.get('/', usersController.getAllUsers);
 
 /**
  * @route   GET /api/users/:userId/documents-folders
  * @desc    Get documents and folders for a user with pagination (listing view)
- * @access  Public
  * @query   page, limit, skip, take
  */
 router.get('/:userId/documents-folders', usersController.getUserDocumentsAndFolders);
@@ -22,7 +19,6 @@ router.get('/:userId/documents-folders', usersController.getUserDocumentsAndFold
 /**
  * @route   GET /api/users/:userId/search
  * @desc    Search documents and folders for a user with pagination
- * @access  Public
  * @query   search, page, limit, skip, take
  */
 router.get('/:userId/search', usersController.searchUserDocumentsAndFolders);
