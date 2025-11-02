@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useAppSelector, useAppDispatch } from '@/hooks/useRedux';
+import { setItems } from '@/lib/store/slices/documentsSlice';
 import {
     Box,
     Card,
@@ -48,13 +50,17 @@ import type { DocumentItem, FolderItem } from '@/types';
 import UploadModal from '@/components/features/documents/UploadModal';
 import CreateFolderModal from '@/components/features/folders/CreateFolderModal';
 import ViewFolderModal from '@/components/features/folders/ViewFolderModal';
+import DeleteFolderModal from '@/components/features/folders/DeleteFolderModal';
 import { formatDate } from '@/lib/utils/date.utils';
 import { useDocumentsAndFolders } from '@/hooks/useDocumentsAndFolders';
 
 export default function DocumentListing() {
+    const dispatch = useAppDispatch();
+    const itemsById = useAppSelector((state) => state.documents.itemsById);
+    
     const [searchInput, setSearchInput] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+    const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [anchorEl, setAnchorEl] = useState<{ element: HTMLElement; itemId: number } | null>(null);
@@ -62,8 +68,9 @@ export default function DocumentListing() {
     const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
     const [viewFolderModalOpen, setViewFolderModalOpen] = useState(false);
     const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
-    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deleteFolderModalOpen, setDeleteFolderModalOpen] = useState(false);
     const [folderToDelete, setFolderToDelete] = useState<{ id: number; name: string } | null>(null);
+    const [foldersToDeleteBulk, setFoldersToDeleteBulk] = useState<{ ids: number[]; names: string[] } | null>(null);
     const [userId, setUserId] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
     const { items, loading, error: fetchError, totalPages, fetchData } = useDocumentsAndFolders({
@@ -72,6 +79,13 @@ export default function DocumentListing() {
         rowsPerPage,
         searchQuery,
     });
+
+    //Update store when items change
+    useEffect(() => {
+        if (items.length > 0) {
+            dispatch(setItems(items));
+        }
+    }, [items, dispatch]);
 
     //Fetch user ID from database (only one user exists in seeded data)
     useEffect(() => {
@@ -131,20 +145,25 @@ export default function DocumentListing() {
         }
     }, [calculatedTotalPages, page]);
 
+    const getItemKey = (item: DocumentItem | FolderItem): string => {
+        return `${item.type}-${item.id}`;
+    };
+
     const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.checked) {
-            setSelectedItems(new Set(displayItems.map((item) => item.id)));
+            setSelectedItems(new Set(displayItems.map((item) => getItemKey(item))));
         } else {
             setSelectedItems(new Set());
         }
     };
 
-    const handleSelectItem = (itemId: number) => {
+    const handleSelectItem = (item: DocumentItem | FolderItem) => {
+        const itemKey = getItemKey(item);
         const newSelected = new Set(selectedItems);
-        if (newSelected.has(itemId)) {
-            newSelected.delete(itemId);
+        if (newSelected.has(itemKey)) {
+            newSelected.delete(itemKey);
         } else {
-            newSelected.add(itemId);
+            newSelected.add(itemKey);
         }
         setSelectedItems(newSelected);
     };
@@ -166,7 +185,8 @@ export default function DocumentListing() {
                 const folder = items.find((item) => item.id === itemId && item.type === 'folder');
                 if (folder) {
                     setFolderToDelete({ id: itemId, name: folder.name });
-                    setDeleteConfirmOpen(true);
+                    setFoldersToDeleteBulk(null);
+                    setDeleteFolderModalOpen(true);
                     handleMenuClose();
                     return;
                 }
@@ -176,7 +196,7 @@ export default function DocumentListing() {
             //Remove from selected items
             setSelectedItems((prev) => {
                 const newSet = new Set(prev);
-                newSet.delete(itemId);
+                newSet.delete(`${type}-${itemId}`);
                 return newSet;
             });
             handleMenuClose();
@@ -195,11 +215,11 @@ export default function DocumentListing() {
             await fetchData();
             setSelectedItems((prev) => {
                 const newSet = new Set(prev);
-                newSet.delete(folderToDelete.id);
+                newSet.delete(`folder-${folderToDelete.id}`);
                 return newSet;
             });
 
-            setDeleteConfirmOpen(false);
+            setDeleteFolderModalOpen(false);
             setFolderToDelete(null);
 
         } catch (err) {
@@ -215,21 +235,40 @@ export default function DocumentListing() {
 
     const handleBulkDelete = async () => {
         if (selectedItems.size === 0) return;
-        try {
-            //Separate selected items
-            const documentIds: number[] = [];
-            const folderIds: number[] = [];
 
-            items.forEach((item) => {
-                if (selectedItems.has(item.id)) {
-                    if (item.type === 'document') {
-                        documentIds.push(item.id);
-                    } else {
-                        folderIds.push(item.id);
-                    }
-                }
-            });
-            //Delete items
+        //Separate selected items
+        const documentIds: number[] = [];
+        const folderIds: number[] = [];
+        const folderNames: string[] = [];
+
+        //Loop through selectedItems keys
+        selectedItems.forEach((itemKey) => {
+            const [type, idStr] = itemKey.split('-');
+            const id = Number(idStr);
+            
+            if (type === 'document') {
+                documentIds.push(id);
+            } else if (type === 'folder') {
+                folderIds.push(id);
+                const folder = itemsById[itemKey] as FolderItem | undefined;
+                folderNames.push(folder?.name || `Folder ${id}`);
+            }
+        });
+
+        //Show confirmation popup for multiple folders
+        if (folderIds.length > 0) {
+            setFoldersToDeleteBulk({ ids: folderIds, names: folderNames });
+            setFolderToDelete(null);
+            setDeleteFolderModalOpen(true);
+            return;
+        }
+
+        //If only documents, proceed with deletion
+        await executeBulkDelete(documentIds, []);
+    };
+
+    const executeBulkDelete = async (documentIds: number[], folderIds: number[]) => {
+        try {
             const deletePromises: Promise<unknown>[] = [];
             if (documentIds.length > 0) {
                 deletePromises.push(deleteManyDocuments(documentIds));
@@ -246,7 +285,27 @@ export default function DocumentListing() {
         }
     };
 
-    const isAllSelected = displayItems.length > 0 && displayItems.every((item) => selectedItems.has(item.id));
+    //Handles bulk folder deletion after user confirmation
+    const handleConfirmBulkDeleteFolders = async () => {
+        if (!foldersToDeleteBulk) return;
+
+        //Get remaining document IDs that are selected - check all selectedItems keys
+        const documentIds: number[] = [];
+        selectedItems.forEach((itemKey) => {
+            const [type, idStr] = itemKey.split('-');
+            const id = Number(idStr);
+            
+            if (type === 'document') {
+                documentIds.push(id);
+            }
+        });
+
+        await executeBulkDelete(documentIds, foldersToDeleteBulk.ids);
+        setDeleteFolderModalOpen(false);
+        setFoldersToDeleteBulk(null);
+    };
+
+    const isAllSelected = displayItems.length > 0 && displayItems.every((item) => selectedItems.has(getItemKey(item)));
     const isIndeterminate = selectedItems.size > 0 && selectedItems.size < displayItems.length;
 
     return (
@@ -382,8 +441,8 @@ export default function DocumentListing() {
                                 >
                                     <TableCell padding="checkbox">
                                         <Checkbox
-                                            checked={selectedItems.has(item.id)}
-                                            onChange={() => handleSelectItem(item.id)}
+                                            checked={selectedItems.has(getItemKey(item))}
+                                            onChange={() => handleSelectItem(item)}
                                         />
                                     </TableCell>
                                     <TableCell>
@@ -579,35 +638,24 @@ export default function DocumentListing() {
             )}
 
             {/* Delete folder popup confirmation */}
-            <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
-                <DialogTitle>Delete Folder</DialogTitle>
-
-                <DialogContent>
-                    <Typography>
-                        Are you sure you want to delete this folder &quot;{folderToDelete?.name}&quot; ?
-                    </Typography>
-                    <Alert severity="info" sx={{ mt: 2 }}>
-                        <Box>
-                            <Typography variant="body2">
-                                Note:
-                            </Typography>
-                            <Typography variant="body2">
-                                Deleting the folder will not delete the documents inside it.
-                            </Typography>
-                            <Typography variant="body2">
-                                The documents will be removed from this folder but will remain in your documents list.
-                            </Typography>
-                        </Box>
-                    </Alert>
-                </DialogContent>
-
-                <DialogActions>
-                    <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-                    <Button onClick={handleConfirmDeleteFolder} variant="contained" color="error">
-                        Delete
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <DeleteFolderModal
+                open={deleteFolderModalOpen}
+                onClose={() => {
+                    setDeleteFolderModalOpen(false);
+                    setFolderToDelete(null);
+                    setFoldersToDeleteBulk(null);
+                }}
+                onConfirm={() => {
+                    if (folderToDelete) {
+                        handleConfirmDeleteFolder();
+                    } else if (foldersToDeleteBulk) {
+                        handleConfirmBulkDeleteFolders();
+                    }
+                }}
+                folderName={folderToDelete?.name}
+                folderCount={foldersToDeleteBulk?.ids.length}
+                folderNames={foldersToDeleteBulk?.names}
+            />
         </Card>
     );
 }

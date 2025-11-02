@@ -70,19 +70,6 @@ export const getAllUsers = async (params?: PaginationParams): Promise<PaginatedR
 };
 
 /**
- * Get a user by ID
- */
-export const getUserById = async (id: number): Promise<User | null> => {
-    return prisma.user.findUnique({
-        where: { id },
-        include: {
-            documents: true,
-            folders: true,
-        },
-    });
-};
-
-/**
  * Get documents and folders for a user with pagination
  */
 export const getUserDocumentsAndFolders = async (userId: number, params?: PaginationParams): Promise<UserDocumentsAndFoldersResult> => {

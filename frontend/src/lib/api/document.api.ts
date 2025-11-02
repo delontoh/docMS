@@ -1,31 +1,5 @@
 import { request } from './client';
-import type { Document, CreateDocumentInput, PaginatedResponse } from '@/types';
-
-/**
- * Get documents by user ID with pagination
- */
-export const getDocumentsByUserId = async (
-    userId: number,
-    params?: { page?: number; limit?: number }
-): Promise<PaginatedResponse<Document>> => {
-    const queryParams = new URLSearchParams();
-
-    if (params?.page) queryParams.set('page', params.page.toString());
-    if (params?.limit) queryParams.set('limit', params.limit.toString());
-
-    const query = queryParams.toString();
-    
-    return request<PaginatedResponse<Document>>(
-        `/documents/user/${userId}${query ? `?${query}` : ''}`
-    );
-};
-
-/**
- * Get a single document by ID
- */
-export const getDocumentById = async (id: number): Promise<{ success: boolean; data: Document }> => {
-    return request<{ success: boolean; data: Document }>(`/documents/${id}`);
-};
+import type { Document, CreateDocumentInput } from '@/types';
 
 /**
  * Create a new document

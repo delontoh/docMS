@@ -39,48 +39,6 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
 };
 
 /**
- * Get a single user by ID
- * GET /users/:id
- */
-export const getUserById = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const id = Number(req.params.id);
-
-        if (isNaN(id)) {
-            res.status(500).json({
-                success: false,
-                message: 'Invalid user ID',
-            });
-            return;
-        }
-
-        const user = await usersModel.getUserById(id);
-
-        if (!user) {
-            res.status(404).json({
-                success: false,
-                message: 'User not found',
-            });
-            return;
-        }
-
-        res.status(200).json({
-            success: true,
-            message: 'User retrieved successfully',
-            data: user,
-        });
-
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'getUserById: Error';
-        res.status(500).json({
-            success: false,
-            message: 'Failed to retrieve user',
-            error: errorMessage,
-        });
-    }
-};
-
-/**
  * Get documents and folders for a user with pagination
  * GET /users/:userId/documents-folders?page=1&limit=10
  */

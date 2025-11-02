@@ -27,12 +27,5 @@ router.get('/:userId/documents-folders', usersController.getUserDocumentsAndFold
  */
 router.get('/:userId/search', usersController.searchUserDocumentsAndFolders);
 
-/**
- * @route   GET /api/users/:id
- * @desc    Get a single user by ID
- * @access  Public
- */
-router.get('/:id', usersController.getUserById);
-
 export default router;
 

@@ -16,13 +16,6 @@ export const getUsers = async (params?: { page?: number; limit?: number }): Prom
 };
 
 /**
- * Get a single user by ID
- */
-export const getUserById = async (id: number): Promise<{ success: boolean; data: User }> => {
-    return request<{ success: boolean; data: User }>(`/users/${id}`);
-};
-
-/**
  * Get documents and folders for a user with pagination (listing view)
  */
 export const getUserDocumentsAndFolders = async (

@@ -10,21 +10,6 @@ const router = Router();
  */
 router.post('/', documentsController.createDocument);
 
-/**
- * @route   GET /api/documents
- * @desc    Get all documents with pagination
- * @access  Public
- * @query   page, limit, skip, take
- */
-router.get('/', documentsController.getAllDocuments);
-
-/**
- * @route   GET /api/documents/user/:userId
- * @desc    Get documents by user ID with pagination
- * @access  Public
- * @query   page, limit, skip, take
- */
-router.get('/user/:userId', documentsController.getDocumentsByUserId);
 
 /**
  * @route   POST /api/documents/user/:userId/check-names
@@ -46,20 +31,6 @@ router.get('/user/:userId/without-folder', documentsController.getDocumentsWitho
  */
 router.put('/assign-folder', documentsController.assignDocumentsToFolder);
 
-/**
- * @route   GET /api/documents/folder/:folderId
- * @desc    Get documents by folder ID with pagination
- * @access  Public
- * @query   page, limit, skip, take
- */
-router.get('/folder/:folderId', documentsController.getDocumentsByFolderId);
-
-/**
- * @route   GET /api/documents/:id
- * @desc    Get a single document by ID
- * @access  Public
- */
-router.get('/:id', documentsController.getDocumentById);
 
 /**
  * @route   DELETE /api/documents/:id
