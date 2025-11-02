@@ -167,21 +167,14 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
         setFiles((prev) => prev.filter((f) => f.id !== fileId));
     }, []);
 
-    const handleUpload = async () => {
-        const validFiles = files.filter((f) => f.status === 'pending' && !f.error);
-        if (validFiles.length === 0) return;
-
-        setIsUploading(true);
-        const successFiles: string[] = [];
-        const failedFiles: string[] = [];
-
-        //Check for duplicate names upon upload
+   //Check for duplicate document names
+    const checkAndFilterDuplicates = useCallback(async (validFiles: FileWithPreview[]): Promise<FileWithPreview[]> => {
         const fileNames = validFiles.map((f) => f.file.name);
-        let filesToUpload = validFiles;
         
         try {
             const duplicateCheckResponse = await checkDocumentNamesExist(userId, fileNames);
             const existingNames = duplicateCheckResponse?.data?.existingNames || [];
+            
             if (existingNames.length > 0) {
                 setFiles((prev) =>
                     prev.map((fileItem) => {
@@ -196,16 +189,29 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                     })
                 );
 
-                //Remove duplicates from files to upload
-                filesToUpload = validFiles.filter((fileItem) => !existingNames.includes(fileItem.file.name));
-                
-                if (filesToUpload.length === 0) {
-                    setIsUploading(false);
-                    return;
-                }
+                //Return files without duplicates
+                return validFiles.filter((fileItem) => !existingNames.includes(fileItem.file.name));
             }
+
         } catch (error) {
-            console.error('Failed to check for duplicate names:', error); //Backend will still catch duplicates
+            console.error('Failed to check for duplicate names:', error);
+        }
+        return validFiles;
+    }, [userId]);
+
+    const handleUpload = async () => {
+        const validFiles = files.filter((f) => f.status === 'pending' && !f.error);
+        if (validFiles.length === 0) return;
+
+        setIsUploading(true);
+        const successFiles: string[] = [];
+        const failedFiles: string[] = [];
+
+        const filesToUpload = await checkAndFilterDuplicates(validFiles);
+        
+        if (filesToUpload.length === 0) {
+            setIsUploading(false);
+            return;
         }
 
         setFiles((prev) =>

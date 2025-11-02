@@ -34,30 +34,32 @@ import {
     MoreHoriz as MoreHorizIcon,
 } from '@mui/icons-material';
 import {
-    getUserDocumentsAndFolders,
-    searchUserDocumentsAndFolders,
     deleteDocument,
     deleteFolder,
     deleteManyDocuments,
     deleteManyFolders,
     getUsers,
 } from '@/lib/api';
-import type { DocumentItem, FolderItem, Item } from '@/types';
+import type { DocumentItem, FolderItem } from '@/types';
 import UploadModal from '@/components/features/documents/UploadModal';
-import { formatDate } from '@/utils/date.utils';
+import { formatDate } from '@/lib/utils/date.utils';
+import { useDocumentsAndFolders } from '@/hooks/useDocumentsAndFolders';
 
 export default function DocumentListing() {
-    const [items, setItems] = useState<Item[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [totalPages, setTotalPages] = useState(1);
     const [anchorEl, setAnchorEl] = useState<{ element: HTMLElement; itemId: number } | null>(null);
     const [uploadModalOpen, setUploadModalOpen] = useState(false);
     const [userId, setUserId] = useState<number | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const { items, loading, error: fetchError, totalPages, fetchData } = useDocumentsAndFolders({
+        userId,
+        page,
+        rowsPerPage,
+        searchQuery,
+    });
 
     //Fetch user ID from database (only one user exists in seeded data)
     useEffect(() => {
@@ -75,78 +77,23 @@ export default function DocumentListing() {
         fetchUserId();
     }, []);
 
+    useEffect(() => {
+        if (fetchError) {
+            setError(fetchError);
+        }
+    }, [fetchError]);
+
     //Reset to page 1 if no data in other pages
     useEffect(() => {
         if (items.length === 0 && page > 1 && !loading) {
             setPage(1);
         }
     }, [items.length, page, loading]);
-
-
-    //Fetch both documents and folders for the current user
-    const fetchData = useCallback(async () => {
-        if (!userId) {
-            setItems([]);
-            setTotalPages(1);
-            setLoading(false);
-            return;
-        }
-
-        try {
-            setLoading(true);
-            setError(null);
-
-            //Use search API if search query exists, otherwise use regular listing API
-            const response = searchQuery.trim()
-                ? await searchUserDocumentsAndFolders(userId, {
-                      search: searchQuery.trim(),
-                      page,
-                      limit: rowsPerPage,
-                  })
-                : await getUserDocumentsAndFolders(userId, {
-                      page,
-                      limit: rowsPerPage,
-                  });
-
-            const documents: DocumentItem[] = (response?.documents || []).map((doc) => ({
-                ...doc,
-                type: 'document' as const,
-            }));
-
-            const folders: FolderItem[] = (response?.folders || []).map((folder) => ({
-                ...folder,
-                type: 'folder' as const,
-            }));
-
-            //Combine both folders and documents
-            const combined = [...documents, ...folders].sort((a, b) => {
-                if (a.type !== b.type) {
-                    return a.type === 'folder' ? -1 : 1;
-                }
-                const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-                const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-                return dateB - dateA;
-            });
-
-            setItems(combined);
-            const responseTotalPages = response?.totalPages || 1;
-            setTotalPages(responseTotalPages);
-
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load documents');
-            setItems([]);
-            setTotalPages(1);
-            setPage(1);
-        } finally {
-            setLoading(false);
-        }
-    }, [userId, page, rowsPerPage, searchQuery]);
-
+    
+    //Reset page to 1 when search query changes
     useEffect(() => {
-        if (userId !== null) {
-            fetchData();
-        }
-    }, [fetchData, userId]);
+        setPage(1);
+    }, [searchQuery]);
 
     const displayItems = useMemo(() => {
         return items;
@@ -155,11 +102,6 @@ export default function DocumentListing() {
     const calculatedTotalPages = useMemo(() => {
         return totalPages;
     }, [totalPages]);
-
-    //Reset page to 1 when search query changes
-    useEffect(() => {
-        setPage(1);
-    }, [searchQuery]);
 
     //Ensure valid page range when calculatedTotalPages changes
     useEffect(() => {
