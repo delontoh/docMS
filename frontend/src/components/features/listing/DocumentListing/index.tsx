@@ -24,6 +24,10 @@ import {
     Paper,
     CircularProgress,
     Alert,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
 } from '@mui/material';
 import {
     Search as SearchIcon,
@@ -43,6 +47,7 @@ import {
 import type { DocumentItem, FolderItem } from '@/types';
 import UploadModal from '@/components/features/documents/UploadModal';
 import CreateFolderModal from '@/components/features/folders/CreateFolderModal';
+import ViewFolderModal from '@/components/features/folders/ViewFolderModal';
 import { formatDate } from '@/lib/utils/date.utils';
 import { useDocumentsAndFolders } from '@/hooks/useDocumentsAndFolders';
 
@@ -55,6 +60,10 @@ export default function DocumentListing() {
     const [anchorEl, setAnchorEl] = useState<{ element: HTMLElement; itemId: number } | null>(null);
     const [uploadModalOpen, setUploadModalOpen] = useState(false);
     const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
+    const [viewFolderModalOpen, setViewFolderModalOpen] = useState(false);
+    const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [folderToDelete, setFolderToDelete] = useState<{ id: number; name: string } | null>(null);
     const [userId, setUserId] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
     const { items, loading, error: fetchError, totalPages, fetchData } = useDocumentsAndFolders({
@@ -153,8 +162,16 @@ export default function DocumentListing() {
             if (type === 'document') {
                 await deleteDocument(itemId);
             } else {
-                await deleteFolder(itemId);
-            }       
+                //Handle folder delete to show popup confirmation
+                const folder = items.find((item) => item.id === itemId && item.type === 'folder');
+                if (folder) {
+                    setFolderToDelete({ id: itemId, name: folder.name });
+                    setDeleteConfirmOpen(true);
+                    handleMenuClose();
+                    return;
+                }
+            }
+
             await fetchData();
             //Remove from selected items
             setSelectedItems((prev) => {
@@ -163,9 +180,37 @@ export default function DocumentListing() {
                 return newSet;
             });
             handleMenuClose();
+
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete item');
         }
+    };
+
+    const handleConfirmDeleteFolder = async () => {
+        if (!folderToDelete) return;
+
+        try {
+            await deleteFolder(folderToDelete.id);
+
+            await fetchData();
+            setSelectedItems((prev) => {
+                const newSet = new Set(prev);
+                newSet.delete(folderToDelete.id);
+                return newSet;
+            });
+
+            setDeleteConfirmOpen(false);
+            setFolderToDelete(null);
+
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to delete folder');
+        }
+    };
+
+    const handleViewFolder = (folderId: number) => {
+        setSelectedFolderId(folderId);
+        setViewFolderModalOpen(true);
+        handleMenuClose();
     };
 
     const handleBulkDelete = async () => {
@@ -218,11 +263,11 @@ export default function DocumentListing() {
                         startIcon={<UploadIcon />}
                         onClick={() => setUploadModalOpen(true)}
                         sx={{
-                            borderColor: '#1976d2',
-                            color: '#1976d2',
+                            borderColor: 'primary.main',
+                            color: 'primary.main',
                             '&:hover': {
-                                borderColor: '#1565c0',
-                                backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                                borderColor: 'primary.dark',
+                                backgroundColor: (theme) => `${theme.palette.primary.main}0A`,
                             },
                         }}
                     >
@@ -234,9 +279,9 @@ export default function DocumentListing() {
                         startIcon={<AddIcon />}
                         onClick={() => setCreateFolderModalOpen(true)}
                         sx={{
-                            backgroundColor: '#1976d2',
+                            backgroundColor: 'primary.main',
                             '&:hover': {
-                                backgroundColor: '#1565c0',
+                                backgroundColor: 'primary.dark',
                             },
                         }}
                     >
@@ -290,7 +335,7 @@ export default function DocumentListing() {
             <TableContainer component={Paper} sx={{ borderRadius: 1 }}>
                 <Table>
                     <TableHead>
-                        <TableRow sx={{ backgroundColor: '#1565c0' }}>
+                        <TableRow sx={{ backgroundColor: 'primary.main' }}>
                             <TableCell padding="checkbox" sx={{ color: 'white' }}>
                                 <Checkbox
                                     indeterminate={isIndeterminate}
@@ -429,20 +474,72 @@ export default function DocumentListing() {
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                 transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
-                {anchorEl && (
-                    <>
-                        <MenuItem
-                            onClick={() => {
-                                const item = items.find((i) => i.id === anchorEl?.itemId);
-                                if (item && anchorEl) {
-                                    handleDelete(anchorEl.itemId, item.type);
-                                }
-                            }}
-                        >
-                            Delete
-                        </MenuItem>
-                    </>
-                )}
+                {anchorEl && (() => {
+                    const item = items.find((i) => i.id === anchorEl?.itemId);
+                    if (!item) return null;
+
+                    {/* Menu item for folder file type */}
+                    if (item.type === 'folder') {
+                        return (
+                            <>
+                                <MenuItem
+                                    onClick={() => {
+                                        if (anchorEl) {
+                                            handleViewFolder(anchorEl.itemId);
+                                        }
+                                    }}
+                                    sx={{
+                                        backgroundColor: 'primary.main',
+                                        color: 'primary.contrastText',
+                                        '&:hover': {
+                                            backgroundColor: 'primary.dark',
+                                        },
+                                    }}
+                                >
+                                    View
+                                </MenuItem>
+
+                                <MenuItem
+                                    onClick={() => {
+                                        if (anchorEl) {
+                                            handleDelete(anchorEl.itemId, item.type);
+                                        }
+                                    }}
+                                    sx={{
+                                        backgroundColor: 'error.main',
+                                        color: 'white',
+                                        '&:hover': {
+                                            backgroundColor: 'error.dark',
+                                        },
+                                    }}
+                                >
+                                    Delete
+                                </MenuItem>
+                            </>
+                        );
+                        
+                    {/* Menu item for document file type */}
+                    } else {
+                        return (
+                            <MenuItem
+                                onClick={() => {
+                                    if (anchorEl) {
+                                        handleDelete(anchorEl.itemId, item.type);
+                                    }
+                                }}
+                                sx={{
+                                    backgroundColor: 'error.main',
+                                    color: 'white',
+                                    '&:hover': {
+                                        backgroundColor: 'error.dark',
+                                    },
+                                }}
+                            >
+                                Delete
+                            </MenuItem>
+                        );
+                    }
+                })()}
             </Menu>
 
             {/* Upload Document Modal */}
@@ -468,6 +565,49 @@ export default function DocumentListing() {
                     }}
                 />
             )}
+
+            {/* View Folder Modal */}
+            {selectedFolderId !== null && (
+                <ViewFolderModal
+                    open={viewFolderModalOpen}
+                    onClose={() => {
+                        setViewFolderModalOpen(false);
+                        setSelectedFolderId(null);
+                    }}
+                    folderId={selectedFolderId}
+                />
+            )}
+
+            {/* Delete folder popup confirmation */}
+            <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
+                <DialogTitle>Delete Folder</DialogTitle>
+
+                <DialogContent>
+                    <Typography>
+                        Are you sure you want to delete this folder &quot;{folderToDelete?.name}&quot; ?
+                    </Typography>
+                    <Alert severity="info" sx={{ mt: 2 }}>
+                        <Box>
+                            <Typography variant="body2">
+                                Note:
+                            </Typography>
+                            <Typography variant="body2">
+                                Deleting the folder will not delete the documents inside it.
+                            </Typography>
+                            <Typography variant="body2">
+                                The documents will be removed from this folder but will remain in your documents list.
+                            </Typography>
+                        </Box>
+                    </Alert>
+                </DialogContent>
+
+                <DialogActions>
+                    <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+                    <Button onClick={handleConfirmDeleteFolder} variant="contained" color="error">
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Card>
     );
 }

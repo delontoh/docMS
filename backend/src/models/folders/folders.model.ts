@@ -141,8 +141,16 @@ export const updateFolder = async (id: number, data: UpdateFolderInput): Promise
 
 /**
  * Delete a folder by ID
+ * Sets all documents' folder_document_id to null before deleting the folder
  */
 export const deleteFolder = async (id: number): Promise<Folder> => {
+    //Update all documents in this folder to remove folder association
+    await prisma.document.updateMany({
+        where: { folder_document_id: id },
+        data: { folder_document_id: null },
+    });
+
+    //Delete folder
     return prisma.folder.delete({
         where: { id },
     });
@@ -150,8 +158,14 @@ export const deleteFolder = async (id: number): Promise<Folder> => {
 
 /**
  * Delete multiple folders by IDs
+ * Sets all documents' folder_document_id to null for each folder before deleting
  */
 export const deleteManyFolders = async (ids: number[]): Promise<{ count: number }> => {
+    await prisma.document.updateMany({
+        where: { folder_document_id: { in: ids } },
+        data: { folder_document_id: null },
+    });
+
     return prisma.folder.deleteMany({
         where: { id: { in: ids } },
     });

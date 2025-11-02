@@ -9,7 +9,7 @@ model Document {
     document_user_id    Int      
     created_by          User     @relation(fields: [document_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
     folder_document_id  Int?
-    belong_to_folder    Folder?  @relation(fields: [folder_document_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    belong_to_folder    Folder?  @relation(fields: [folder_document_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
     @@unique([name, document_user_id])
     @@map("documents")
