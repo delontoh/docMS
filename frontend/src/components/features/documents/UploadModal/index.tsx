@@ -189,7 +189,7 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                             return {
                                 ...fileItem,
                                 status: 'error',
-                                error: `A document with the name "${fileItem.file.name}" already exists. Please rename the file or remove the existing document.`,
+                                error: `A document with the name "${fileItem.file.name}" already exists. Please remove and rename the document.`,
                             };
                         }
                         return fileItem;
@@ -319,6 +319,7 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                     onClick={() => fileInputRef.current?.click()}
                 >
                     <CloudUploadIcon sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
+
                     <Typography variant="h6" gutterBottom>
                         Drag and drop files here
                     </Typography>
@@ -328,6 +329,7 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                     <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
                         Supported formats: DOCX, XLSX, PDF (Max 5MB per file)
                     </Typography>
+
                     <input
                         ref={fileInputRef}
                         type="file"
@@ -355,6 +357,15 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                                         mb: 1,
                                         bgcolor: 'background.paper',
                                     }}
+                                    secondaryAction={
+                                        <IconButton
+                                            edge="end"
+                                            onClick={() => handleRemoveFile(fileItem.id)}
+                                            disabled={fileItem.status === 'uploading'}
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    }
                                 >
                                     <FileIcon sx={{ mr: 2, color: 'action.active' }} />
                                     <ListItemText
@@ -364,11 +375,6 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                                                 <Typography variant="caption" component="span">
                                                     {formatFileSize(fileItem.file.size)}
                                                 </Typography>
-                                                {fileItem.error && (
-                                                    <Alert severity="warning" sx={{ mt: 0.5 }}>
-                                                        {fileItem.error}
-                                                    </Alert>
-                                                )}
                                                 {fileItem.status === 'uploading' && (
                                                     <LinearProgress sx={{ mt: 1 }} />
                                                 )}
@@ -395,15 +401,6 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                                             </Box>
                                         }
                                     />
-                                    <ListItemSecondaryAction>
-                                        <IconButton
-                                            edge="end"
-                                            onClick={() => handleRemoveFile(fileItem.id)}
-                                            disabled={fileItem.status === 'uploading'}
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </ListItemSecondaryAction>
                                 </ListItem>
                             ))}
                         </List>

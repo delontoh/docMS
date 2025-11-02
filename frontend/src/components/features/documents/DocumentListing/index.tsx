@@ -35,8 +35,11 @@ import {
 } from '@mui/icons-material';
 import {
     getUserDocumentsAndFolders,
+    searchUserDocumentsAndFolders,
     deleteDocument,
     deleteFolder,
+    deleteManyDocuments,
+    deleteManyFolders,
     getUsers,
 } from '@/lib/api';
 import type { DocumentItem, FolderItem, Item } from '@/types';
@@ -72,13 +75,6 @@ export default function DocumentListing() {
         fetchUserId();
     }, []);
 
-    //Ensure valid page range when totalPages changes
-    useEffect(() => {
-        if (totalPages > 0 && page > totalPages) {
-            setPage(1);
-        }
-    }, [totalPages]);
-
     //Reset to page 1 if no data in other pages
     useEffect(() => {
         if (items.length === 0 && page > 1 && !loading) {
@@ -86,20 +82,6 @@ export default function DocumentListing() {
         }
     }, [items.length, page, loading]);
 
-    //Calculate totalPages based on combined items response
-    const calculateTotalPages = useCallback((combined: Item[], responseTotalPages: number, currentPage: number) => {
-        if (combined.length === 0) {
-            if (currentPage === 1) {
-                return { totalPages: 1, page: 1 };
-            } else {
-                return { totalPages: 1, page: 1 };
-            }
-        } else if (currentPage > responseTotalPages) {
-            return { totalPages: responseTotalPages, page: responseTotalPages };
-        } else {
-            return { totalPages: responseTotalPages, page: currentPage };
-        }},[]
-    );
 
     //Fetch both documents and folders for the current user
     const fetchData = useCallback(async () => {
@@ -114,7 +96,17 @@ export default function DocumentListing() {
             setLoading(true);
             setError(null);
 
-            const response = await getUserDocumentsAndFolders(userId, { page, limit: rowsPerPage });
+            //Use search API if search query exists, otherwise use regular listing API
+            const response = searchQuery.trim()
+                ? await searchUserDocumentsAndFolders(userId, {
+                      search: searchQuery.trim(),
+                      page,
+                      limit: rowsPerPage,
+                  })
+                : await getUserDocumentsAndFolders(userId, {
+                      page,
+                      limit: rowsPerPage,
+                  });
 
             const documents: DocumentItem[] = (response?.documents || []).map((doc) => ({
                 ...doc,
@@ -138,13 +130,7 @@ export default function DocumentListing() {
 
             setItems(combined);
             const responseTotalPages = response?.totalPages || 1;
-
-            //Set pages
-            const { totalPages: newTotalPages, page: newPage } = calculateTotalPages(combined, responseTotalPages, page);
-            setTotalPages(newTotalPages);
-            if (newPage !== page) {
-                setPage(newPage);
-            }
+            setTotalPages(responseTotalPages);
 
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load documents');
@@ -154,7 +140,7 @@ export default function DocumentListing() {
         } finally {
             setLoading(false);
         }
-    }, [userId, page, rowsPerPage]);
+    }, [userId, page, rowsPerPage, searchQuery]);
 
     useEffect(() => {
         if (userId !== null) {
@@ -162,17 +148,29 @@ export default function DocumentListing() {
         }
     }, [fetchData, userId]);
 
-    //Filter items by search query
-    const filteredItems = useMemo(() => {
-        if (!searchQuery.trim()) return items;
-        
-        const query = searchQuery.toLowerCase();
-        return items.filter((item) => item?.name?.toLowerCase().includes(query));
-    }, [items, searchQuery]);
+    const displayItems = useMemo(() => {
+        return items;
+    }, [items]);
+
+    const calculatedTotalPages = useMemo(() => {
+        return totalPages;
+    }, [totalPages]);
+
+    //Reset page to 1 when search query changes
+    useEffect(() => {
+        setPage(1);
+    }, [searchQuery]);
+
+    //Ensure valid page range when calculatedTotalPages changes
+    useEffect(() => {
+        if (calculatedTotalPages > 0 && page > calculatedTotalPages) {
+            setPage(1);
+        }
+    }, [calculatedTotalPages, page]);
 
     const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.checked) {
-            setSelectedItems(new Set(filteredItems.map((item) => item.id)));
+            setSelectedItems(new Set(displayItems.map((item) => item.id)));
         } else {
             setSelectedItems(new Set());
         }
@@ -202,8 +200,9 @@ export default function DocumentListing() {
                 await deleteDocument(itemId);
             } else {
                 await deleteFolder(itemId);
-            }
-            setItems((prev) => prev.filter((item) => item.id !== itemId));
+            }       
+            await fetchData();
+            //Remove from selected items
             setSelectedItems((prev) => {
                 const newSet = new Set(prev);
                 newSet.delete(itemId);
@@ -215,9 +214,41 @@ export default function DocumentListing() {
         }
     };
 
+    const handleBulkDelete = async () => {
+        if (selectedItems.size === 0) return;
+        try {
+            //Separate selected items
+            const documentIds: number[] = [];
+            const folderIds: number[] = [];
 
-    const isAllSelected = filteredItems.length > 0 && filteredItems.every((item) => selectedItems.has(item.id));
-    const isIndeterminate = selectedItems.size > 0 && selectedItems.size < filteredItems.length;
+            items.forEach((item) => {
+                if (selectedItems.has(item.id)) {
+                    if (item.type === 'document') {
+                        documentIds.push(item.id);
+                    } else {
+                        folderIds.push(item.id);
+                    }
+                }
+            });
+            //Delete items
+            const deletePromises: Promise<unknown>[] = [];
+            if (documentIds.length > 0) {
+                deletePromises.push(deleteManyDocuments(documentIds));
+            }
+            if (folderIds.length > 0) {
+                deletePromises.push(deleteManyFolders(folderIds));
+            }
+            await Promise.all(deletePromises);
+            
+            await fetchData();
+            setSelectedItems(new Set());
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to delete items');
+        }
+    };
+
+    const isAllSelected = displayItems.length > 0 && displayItems.every((item) => selectedItems.has(item.id));
+    const isIndeterminate = selectedItems.size > 0 && selectedItems.size < displayItems.length;
 
     return (
         <Card sx={{ p: 3, borderRadius: 2, boxShadow: 2 }}>
@@ -259,24 +290,38 @@ export default function DocumentListing() {
                 </Box>
             </Box>
 
-            {/* Search Bar */}
+            {/* Search Bar and Bulk Delete */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <TextField
-                    placeholder="Search"
-                    size="small"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    slotProps={{
-                        input: {
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <SearchIcon />
-                                </InputAdornment>
-                            ),
-                        },
-                    }}
-                    sx={{ width: 250 }}
-                />
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    
+                    <TextField
+                        placeholder="Search"
+                        size="small"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        slotProps={{
+                            input: {
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <SearchIcon />
+                                    </InputAdornment>
+                                ),
+                            },
+                        }}
+                        sx={{ width: 250 }}
+                    />
+
+                    {selectedItems.size > 0 && (
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={handleBulkDelete}
+                            disabled={loading}
+                        >
+                            Delete Selected ({selectedItems.size})
+                        </Button>
+                    )}
+                </Box>
             </Box>
 
             {/* Handle error */}
@@ -318,7 +363,7 @@ export default function DocumentListing() {
                                     <CircularProgress />
                                 </TableCell>
                             </TableRow>
-                        ) : filteredItems.length === 0 ? (
+                        ) : displayItems.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                                     <Typography color="textSecondary">
@@ -327,7 +372,7 @@ export default function DocumentListing() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filteredItems.map((item) => (
+                            displayItems.map((item) => (
                                 <TableRow
                                     key={`${item.type}-${item.id}`}
                                     hover
@@ -405,19 +450,19 @@ export default function DocumentListing() {
                     <Typography variant="body2">rows per page</Typography>
                 </Box>
 
-                {totalPages > 0 && items.length > 0 && (
+                {calculatedTotalPages > 0 && displayItems.length > 0 && (
                     <Pagination
-                        count={totalPages}
-                        page={Math.min(page, totalPages)}
+                        count={calculatedTotalPages}
+                        page={Math.min(page, calculatedTotalPages)}
                         onChange={(_, newPage) => {
-                            if (newPage <= totalPages && newPage >= 1 && newPage > 0) {
+                            if (newPage <= calculatedTotalPages && newPage >= 1 && newPage > 0) {
                                 setPage(newPage);
                             }
                         }}
                         color="primary"
                         showFirstButton
                         showLastButton
-                        disabled={items.length === 0}
+                        disabled={displayItems.length === 0}
                     />
                 )}
             </Box>

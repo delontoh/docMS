@@ -13,11 +13,19 @@ router.get('/', usersController.getAllUsers);
 
 /**
  * @route   GET /api/users/:userId/documents-folders
- * @desc    Get documents and folders for a user with pagination (combined)
+ * @desc    Get documents and folders for a user with pagination (listing view)
  * @access  Public
  * @query   page, limit, skip, take
  */
 router.get('/:userId/documents-folders', usersController.getUserDocumentsAndFolders);
+
+/**
+ * @route   GET /api/users/:userId/search
+ * @desc    Search documents and folders for a user with pagination
+ * @access  Public
+ * @query   search, page, limit, skip, take
+ */
+router.get('/:userId/search', usersController.searchUserDocumentsAndFolders);
 
 /**
  * @route   GET /api/users/:id
