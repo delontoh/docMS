@@ -1,5 +1,4 @@
 import { PrismaClient, Document } from '@prisma/client';
-import { formatFileSize } from '@utils/format.utils';
 
 const prisma = new PrismaClient();
 

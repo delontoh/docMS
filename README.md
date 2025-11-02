@@ -1,11 +1,13 @@
-# DocMS Monorepo
+# DocMS
 
-Frontend - (Next.js 14 + Material UI + Redux)
-Backend - (Node.js 20.11 + Express + Prisma + MySQL 8).
+- Frontend - (Next.js 14)
+- Backend - (Node.js 20.11).
 
 ## Prerequisites
 
+- Next.js 14
 - Node.js 20.11+
+- Prisma
 - MySQL 8+
 - npm
 
@@ -61,3 +63,21 @@ npm run dev
 
 - ESLint + Prettier configured in both apps
 - Node version pinned via `.nvmrc` (20.11.0)
+
+## Running Tests
+
+### Root Level (Runs all tests)
+```bash
+npm test
+```
+
+### Backend Only
+```bash
+npm run test:backend
+# or
+cd backend && npm test
+```
+
+### Frontend Only
+```bash
+npm run test:frontend
