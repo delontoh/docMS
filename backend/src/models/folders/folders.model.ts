@@ -156,3 +156,21 @@ export const deleteManyFolders = async (ids: number[]): Promise<{ count: number 
         where: { id: { in: ids } },
     });
 };
+
+/**
+ * Check duplicate folder names for a user
+ * Returns an array of names that already exist
+ */
+export const checkFolderNamesExist = async (userId: number, names: string[]): Promise<string[]> => {
+    const existingFolders = await prisma.folder.findMany({
+        where: {
+            folders_user_id: userId,
+            name: { in: names },
+        },
+        select: {
+            name: true,
+        },
+    });
+
+    return existingFolders.map((folder) => folder.name);
+};

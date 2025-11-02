@@ -11,7 +11,7 @@ export const createFolder = async (req: Request, res: Response): Promise<void> =
         const { name, folders_user_id } = req.body;
 
         if (!name || !folders_user_id) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Missing required fields: { name, folders_user_id }',
             });
@@ -86,7 +86,7 @@ export const getFoldersByUserId = async (req: Request, res: Response): Promise<v
         const userId = Number(req.params.userId);
 
         if (isNaN(userId)) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid user ID',
             });
@@ -132,7 +132,7 @@ export const getFolderById = async (req: Request, res: Response): Promise<void> 
         const id = Number(req.params.id);
 
         if (isNaN(id)) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid folder ID',
             });
@@ -174,7 +174,7 @@ export const updateFolder = async (req: Request, res: Response): Promise<void> =
         const id = Number(req.params.id);
 
         if (isNaN(id)) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid folder ID',
             });
@@ -223,7 +223,7 @@ export const deleteFolder = async (req: Request, res: Response): Promise<void> =
         const id = Number(req.params.id);
 
         if (isNaN(id)) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid folder ID',
             });
@@ -266,7 +266,7 @@ export const deleteManyFolders = async (req: Request, res: Response): Promise<vo
         const { ids } = req.body;
 
         if (!Array.isArray(ids) || ids.length === 0) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid IDs array provided',
             });
@@ -276,7 +276,7 @@ export const deleteManyFolders = async (req: Request, res: Response): Promise<vo
         const numericIds = ids.map((id: unknown) => Number(id)).filter((id: number) => !isNaN(id));
 
         if (numericIds.length === 0) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'No valid IDs provided',
             });
@@ -296,6 +296,54 @@ export const deleteManyFolders = async (req: Request, res: Response): Promise<vo
         res.status(500).json({
             success: false,
             message: 'Failed to delete folders',
+            error: errorMessage,
+        });
+    }
+};
+
+/**
+ * Check which folder names already exist for a user
+ * POST /folders/user/:userId/check-names
+ * Body: { names: ["folder1", "folder2"] }
+ */
+export const checkFolderNamesExist = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = Number(req.params.userId);
+        const { names } = req.body;
+
+        if (isNaN(userId)) {
+            res.status(500).json({
+                success: false,
+                message: 'Invalid user ID',
+            });
+            return;
+        }
+
+        if (!Array.isArray(names) || names.length === 0) {
+            res.status(500).json({
+                success: false,
+                message: 'Invalid names array provided',
+            });
+            return;
+        }
+
+        const existingNames = await foldersModel.checkFolderNamesExist(userId, names);
+
+        res.status(200).json({
+            success: true,
+            message: 'Folder names checked successfully',
+            data: {
+                existingNames,
+                totalChecked: names.length,
+                duplicatesFound: existingNames.length,
+            },
+        });
+
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'checkFolderNamesExist: Error';
+        res.status(500).json({
+            success: false,
+            message: 'Failed to check folder names',
             error: errorMessage,
         });
     }

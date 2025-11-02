@@ -1,5 +1,5 @@
 import { Box, Container, Typography } from '@mui/material';
-import DocumentListing from '@/components/features/documents/DocumentListing';
+import DocumentListing from '@/components/features/listing/DocumentListing';
 
 export default function DocumentsPage() {
     return (

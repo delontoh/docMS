@@ -21,10 +21,10 @@ async function main() {
     //Create documents
     const documentNames = [
         ['Monthly Budget.xlsx', 'Invoice Template.pdf', 'Expense Report.docx'],
-        ['Logo Design.ai', 'Brand Guidelines.pdf', 'Color Palette.png'],
+        ['Logo Design.docx', 'Brand Guidelines.pdf', 'Color Palette.xlsx'],
         ['Terms of Service.pdf', 'Privacy Policy.docx', 'Compliance Report.pdf'],
         ['Q4 Sales Report.pdf', 'Annual Review.docx', 'Performance Metrics.xlsx'],
-        ['Old Contracts Archive.zip', 'Historical Data.xlsx', 'Backup Files.zip'],
+        ['Old Contracts Archive.docx', 'Historical Data.xlsx', 'Backup Files.docx'],
     ];
 
     const documents = await Promise.all(

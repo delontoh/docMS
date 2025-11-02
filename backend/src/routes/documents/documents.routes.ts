@@ -35,6 +35,18 @@ router.get('/user/:userId', documentsController.getDocumentsByUserId);
 router.post('/user/:userId/check-names', documentsController.checkDocumentNamesExist);
 
 /**
+ * GET /api/documents/user/:userId/without-folder
+ * Get documents without folders
+ */
+router.get('/user/:userId/without-folder', documentsController.getDocumentsWithoutFolders);
+
+/**
+ * PUT /api/documents/assign-folder
+ * Assign documents to a folder
+ */
+router.put('/assign-folder', documentsController.assignDocumentsToFolder);
+
+/**
  * @route   GET /api/documents/folder/:folderId
  * @desc    Get documents by folder ID with pagination
  * @access  Public

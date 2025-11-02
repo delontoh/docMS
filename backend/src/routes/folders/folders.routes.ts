@@ -19,6 +19,13 @@ router.post('/', foldersController.createFolder);
 router.get('/', foldersController.getAllFolders);
 
 /**
+ * @route   POST /api/folders/user/:userId/check-names
+ * @desc    Check for duplicate folder names
+ * @access  Public
+ */
+router.post('/user/:userId/check-names', foldersController.checkFolderNamesExist);
+
+/**
  * @route   GET /api/folders/user/:userId
  * @desc    Get folders by user ID with pagination
  * @access  Public

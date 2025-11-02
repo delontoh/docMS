@@ -74,3 +74,23 @@ export const checkDocumentNamesExist = async (
     );
 };
 
+/**
+ * Get documents without folders for a user
+ */
+export const getDocumentsWithoutFolders = async (userId: number): Promise<{ success: boolean; data: Document[] }> => {
+    return request<{ success: boolean; data: Document[] }>(`/documents/user/${userId}/without-folder`);
+};
+
+/**
+ * Assign documents to a folder
+ */
+export const assignDocumentsToFolder = async (
+    documentIds: number[],
+    folderId: number | null
+): Promise<{ success: boolean; message: string; data: { updatedCount: number } }> => {
+    return request<{ success: boolean; message: string; data: { updatedCount: number } }>('/documents/assign-folder', {
+        method: 'PUT',
+        body: JSON.stringify({ documentIds, folderId }),
+    });
+};
+

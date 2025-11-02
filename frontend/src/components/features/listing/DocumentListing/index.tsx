@@ -42,16 +42,19 @@ import {
 } from '@/lib/api';
 import type { DocumentItem, FolderItem } from '@/types';
 import UploadModal from '@/components/features/documents/UploadModal';
+import CreateFolderModal from '@/components/features/folders/CreateFolderModal';
 import { formatDate } from '@/lib/utils/date.utils';
 import { useDocumentsAndFolders } from '@/hooks/useDocumentsAndFolders';
 
 export default function DocumentListing() {
+    const [searchInput, setSearchInput] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [anchorEl, setAnchorEl] = useState<{ element: HTMLElement; itemId: number } | null>(null);
     const [uploadModalOpen, setUploadModalOpen] = useState(false);
+    const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
     const [userId, setUserId] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
     const { items, loading, error: fetchError, totalPages, fetchData } = useDocumentsAndFolders({
@@ -90,6 +93,15 @@ export default function DocumentListing() {
         }
     }, [items.length, page, loading]);
     
+    //Search input debounced
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setSearchQuery(searchInput.trim());
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchInput]);
+
     //Reset page to 1 when search query changes
     useEffect(() => {
         setPage(1);
@@ -220,6 +232,7 @@ export default function DocumentListing() {
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
+                        onClick={() => setCreateFolderModalOpen(true)}
                         sx={{
                             backgroundColor: '#1976d2',
                             '&:hover': {
@@ -239,8 +252,8 @@ export default function DocumentListing() {
                     <TextField
                         placeholder="Search"
                         size="small"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
                         slotProps={{
                             input: {
                                 endAdornment: (
@@ -432,13 +445,25 @@ export default function DocumentListing() {
                 )}
             </Menu>
 
-            {/* Upload Modal */}
+            {/* Upload Document Modal */}
             {userId !== null && (
                 <UploadModal
                     open={uploadModalOpen}
                     onClose={() => setUploadModalOpen(false)}
                     userId={userId}
                     onUploadSuccess={() => {
+                        fetchData();
+                    }}
+                />
+            )}
+
+            {/* Create Folder Modal */}
+            {userId !== null && (
+                <CreateFolderModal
+                    open={createFolderModalOpen}
+                    onClose={() => setCreateFolderModalOpen(false)}
+                    userId={userId}
+                    onFolderCreated={() => {
                         fetchData();
                     }}
                 />

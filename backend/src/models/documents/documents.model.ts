@@ -209,3 +209,33 @@ export const checkDocumentNamesExist = async (userId: number, names: string[]): 
 
     return existingDocuments.map((doc) => doc.name);
 };
+
+/**
+ * Get documents without folders for a user
+ * Returns documents where folder_document_id is null
+ */
+export const getDocumentsWithoutFolders = async (userId: number): Promise<Document[]> => {
+    return prisma.document.findMany({
+        where: {
+            document_user_id: userId,
+            folder_document_id: null,
+        },
+        orderBy: { created_at: 'desc' },
+        include: {
+            created_by: true,
+            belong_to_folder: true,
+        },
+    });
+};
+
+/**
+ * Update and assign documents to a folder
+ */
+export const updateDocumentsToFolder = async (documentIds: number[], folderId: number | null): Promise<{ count: number }> => {
+    return prisma.document.updateMany({
+        where: { id: { in: documentIds } },
+        data: {
+            folder_document_id: folderId,
+        },
+    });
+};

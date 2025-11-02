@@ -11,7 +11,7 @@ export const createDocument = async (req: Request, res: Response): Promise<void>
         const { name, file_size, document_user_id, folder_document_id } = req.body;
 
         if (!name || !file_size || !document_user_id) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Missing required fields: { name, file_size, document_user_id }',
             });
@@ -96,7 +96,7 @@ export const getDocumentsByUserId = async (req: Request, res: Response): Promise
         const userId = Number(req.params.userId);
 
         if (isNaN(userId)) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid user ID',
             });
@@ -142,7 +142,7 @@ export const getDocumentsByFolderId = async (req: Request, res: Response): Promi
         const folderId = Number(req.params.folderId);
 
         if (isNaN(folderId)) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid folder ID',
             });
@@ -188,7 +188,7 @@ export const getDocumentById = async (req: Request, res: Response): Promise<void
         const id = Number(req.params.id);
 
         if (isNaN(id)) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid document ID',
             });
@@ -230,7 +230,7 @@ export const deleteDocument = async (req: Request, res: Response): Promise<void>
         const id = Number(req.params.id);
 
         if (isNaN(id)) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid document ID',
             });
@@ -273,7 +273,7 @@ export const deleteManyDocuments = async (req: Request, res: Response): Promise<
         const { ids } = req.body;
 
         if (!Array.isArray(ids) || ids.length === 0) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid IDs array provided',
             });
@@ -283,7 +283,7 @@ export const deleteManyDocuments = async (req: Request, res: Response): Promise<
         const numericIds = ids.map((id: unknown) => Number(id)).filter((id: number) => !isNaN(id));
 
         if (numericIds.length === 0) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'No valid IDs provided',
             });
@@ -319,7 +319,7 @@ export const checkDocumentNamesExist = async (req: Request, res: Response): Prom
         const { names } = req.body;
 
         if (isNaN(userId)) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid user ID',
             });
@@ -327,7 +327,7 @@ export const checkDocumentNamesExist = async (req: Request, res: Response): Prom
         }
 
         if (!Array.isArray(names) || names.length === 0) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid names array provided',
             });
@@ -351,6 +351,93 @@ export const checkDocumentNamesExist = async (req: Request, res: Response): Prom
         res.status(500).json({
             success: false,
             message: 'Failed to check document names',
+            error: errorMessage,
+        });
+    }
+};
+
+/**
+ * Get documents without folders for a user
+ * GET /documents/user/:userId/without-folder
+ */
+export const getDocumentsWithoutFolders = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = Number(req.params.userId);
+
+        if (isNaN(userId)) {
+            res.status(500).json({
+                success: false,
+                message: 'Invalid user ID',
+            });
+            return;
+        }
+
+        const documents = await documentsModel.getDocumentsWithoutFolders(userId);
+
+        res.status(200).json({
+            success: true,
+            message: 'Documents retrieved successfully',
+            data: documents,
+        });
+
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'getDocumentsWithoutFolders: Error';
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve documents',
+            error: errorMessage,
+        });
+    }
+};
+
+/**
+ * Update documents and assign them to a folder
+ * PUT /documents/assign-folder
+ * Body: { documentIds: [1, 2, 3], folderId: 5 }
+ */
+export const assignDocumentsToFolder = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { documentIds, folderId } = req.body;
+
+        if (!Array.isArray(documentIds) || documentIds.length === 0) {
+            res.status(500).json({
+                success: false,
+                message: 'Invalid documentIds array provided',
+            });
+            return;
+        }
+
+        const numericIds = documentIds.map((id: unknown) => Number(id)).filter((id: number) => !isNaN(id));
+        if (numericIds.length === 0) {
+            res.status(500).json({
+                success: false,
+                message: 'No valid document IDs provided',
+            });
+            return;
+        }
+
+        const numericFolderId = folderId !== null && folderId !== undefined ? Number(folderId) : null;
+        if (numericFolderId !== null && isNaN(numericFolderId)) {
+            res.status(500).json({
+                success: false,
+                message: 'Invalid folder ID',
+            });
+            return;
+        }
+
+        const result = await documentsModel.updateDocumentsToFolder(numericIds, numericFolderId);
+
+        res.status(200).json({
+            success: true,
+            message: `${result.count} document(s) assigned to folder successfully`,
+            data: { updatedCount: result.count },
+        });
+
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'assignDocumentsToFolder: Error';
+        res.status(500).json({
+            success: false,
+            message: 'Failed to assign documents to folder',
             error: errorMessage,
         });
     }

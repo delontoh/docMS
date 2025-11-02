@@ -47,7 +47,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
         const id = Number(req.params.id);
 
         if (isNaN(id)) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid user ID',
             });
@@ -89,7 +89,7 @@ export const getUserDocumentsAndFolders = async (req: Request, res: Response): P
         const userId = Number(req.params.userId);
 
         if (isNaN(userId)) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid user ID',
             });
@@ -136,7 +136,7 @@ export const searchUserDocumentsAndFolders = async (req: Request, res: Response)
         const searchQuery = req.query.search ? String(req.query.search) : '';
 
         if (isNaN(userId)) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Invalid user ID',
             });
@@ -144,7 +144,7 @@ export const searchUserDocumentsAndFolders = async (req: Request, res: Response)
         }
 
         if (!searchQuery.trim()) {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
                 message: 'Search query is required',
             });

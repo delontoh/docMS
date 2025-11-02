@@ -67,3 +67,19 @@ export const deleteManyFolders = async (ids: number[]): Promise<{ success: boole
     });
 };
 
+/**
+ * Check which folder names already exist for a user
+ */
+export const checkFolderNamesExist = async (
+    userId: number,
+    names: string[]
+): Promise<{ success: boolean; data: { existingNames: string[]; totalChecked: number; duplicatesFound: number } }> => {
+    return request<{ success: boolean; data: { existingNames: string[]; totalChecked: number; duplicatesFound: number } }>(
+        `/folders/user/${userId}/check-names`,
+        {
+            method: 'POST',
+            body: JSON.stringify({ names }),
+        }
+    );
+};
+
