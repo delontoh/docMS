@@ -5,7 +5,8 @@ import type { User, Document, Folder } from '@/types';
  * Get all users
  */
 export const getUsers = async (): Promise<User[]> => {
-    return request<User[]>(`/users`);
+    const response = await request<{ success: boolean; message: string; data: User[] }>(`/users`);
+    return response.data;
 };
 
 /**
