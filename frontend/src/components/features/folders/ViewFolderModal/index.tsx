@@ -70,7 +70,7 @@ export default function ViewFolderModal({ open, onClose, folderId }: ViewFolderM
     const documents = (folder?.documents as Document[]) || [];
 
     return (
-        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth data-testid="view-folder-modal">
             <DialogTitle
                 sx={{
                     display: 'flex',
@@ -80,7 +80,7 @@ export default function ViewFolderModal({ open, onClose, folderId }: ViewFolderM
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <FolderIcon sx={{ color: '#ff9800', fontSize: 24 }} />
-                    <Typography variant="h6" component="span">
+                    <Typography variant="h6" component="span" data-testid="view-folder-modal-title">
                         {folder?.name || 'Folder Details'}
                     </Typography>
                 </Box>
@@ -91,6 +91,7 @@ export default function ViewFolderModal({ open, onClose, folderId }: ViewFolderM
                     sx={{
                         color: (theme) => theme.palette.grey[500],
                     }}
+                    data-testid="view-folder-close-icon-button"
                 >
                     <CloseIcon />
                 </IconButton>
@@ -98,41 +99,41 @@ export default function ViewFolderModal({ open, onClose, folderId }: ViewFolderM
 
             <DialogContent>
                 {error && (
-                    <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+                    <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)} data-testid="view-folder-error-alert">
                         {error}
                     </Alert>
                 )}
 
                 {loading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }} data-testid="view-folder-loading">
                         <CircularProgress />
                     </Box>
                 ) : folder ? (
                     <Box>
                         {/* Folder Info */}
-                        <Box sx={{ mb: 3 }}>
-                            <Typography variant="body2" color="textSecondary" gutterBottom>
+                        <Box sx={{ mb: 3 }} data-testid="view-folder-info">
+                            <Typography variant="body2" color="textSecondary" gutterBottom data-testid="view-folder-created-by">
                                 Created by: {folder.created_by?.name || 'Unknown'}
                             </Typography>
-                            <Typography variant="body2" color="textSecondary">
+                            <Typography variant="body2" color="textSecondary" data-testid="view-folder-created-on">
                                 Created on: {folder.created_at ? formatDate(folder.created_at) : 'Unknown'}
                             </Typography>
                         </Box>
 
                         {/* Documents in folder */}
                         <Box>
-                            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+                            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }} data-testid="view-folder-documents-count">
                                 ({documents.length}) document(s) in this folder
                             </Typography>
                             
                             {documents.length === 0 ? (
-                                <Paper sx={{ p: 3, textAlign: 'center' }}>
+                                <Paper sx={{ p: 3, textAlign: 'center' }} data-testid="view-folder-no-documents">
                                     <Typography variant="body2" color="textSecondary">
                                         No documents in this folder
                                     </Typography>
                                 </Paper>
                             ) : (
-                                <Paper>
+                                <Paper data-testid="view-folder-documents-list">
                                     <List>
                                         {documents.map((doc) => (
                                             <ListItem
@@ -144,6 +145,7 @@ export default function ViewFolderModal({ open, onClose, folderId }: ViewFolderM
                                                         borderBottom: 'none',
                                                     },
                                                 }}
+                                                data-testid={`view-folder-document-${doc.id}`}
                                             >
                                                 <DescriptionIcon sx={{ color: '#1976d2', fontSize: 20, mr: 2 }} />
                                                 <ListItemText
@@ -170,7 +172,7 @@ export default function ViewFolderModal({ open, onClose, folderId }: ViewFolderM
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button onClick={handleClose} variant="contained">
+                <Button onClick={handleClose} variant="contained" data-testid="view-folder-close-button">
                     Close
                 </Button>
             </DialogActions>

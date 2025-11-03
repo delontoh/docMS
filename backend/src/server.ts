@@ -17,7 +17,7 @@ async function start() {
     app.use('/api/folders', foldersRoutes);
     app.use('/api/users', usersRoutes);
 
-    // Health check endpoint
+    //Health check endpoint
     app.get('/health', (req, res) => {
         res.json({ status: 'ok', timestamp: new Date().toISOString() });
     });

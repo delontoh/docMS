@@ -477,6 +477,11 @@ export default function DocumentListing() {
                                             size="small"
                                             onClick={(e) => handleMenuOpen(e, item.id)}
                                             sx={{ color: '#666' }}
+                                            aria-label={
+                                                item.type === 'folder'
+                                                    ? `Actions for folder ${item.name}`
+                                                    : `Actions for document ${item.name}`
+                                            }
                                         >
                                             <MoreHorizIcon />
                                         </IconButton>

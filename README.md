@@ -72,9 +72,11 @@ npm run dev
 
 ### Backend
 ```bash
+cd backend
 npm run test:backend
 ```
 
 ### Frontend
 ```bash
+cd frontend
 npm run test:frontend

@@ -158,7 +158,7 @@ export default function CreateFolderModal({ open, onClose, userId, onFolderCreat
     };
 
     return (
-        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth data-testid="create-folder-modal">
             <DialogTitle
                 sx={{
                     display: 'flex',
@@ -166,7 +166,7 @@ export default function CreateFolderModal({ open, onClose, userId, onFolderCreat
                     alignItems: 'center',
                 }}
             >
-                <Typography variant="h6" component="span">
+                <Typography variant="h6" component="span" data-testid="create-folder-modal-title">
                     Create Folder
                 </Typography>
                 <IconButton
@@ -176,6 +176,7 @@ export default function CreateFolderModal({ open, onClose, userId, onFolderCreat
                     sx={{
                         color: (theme) => theme.palette.grey[500],
                     }}
+                    data-testid="create-folder-close-button"
                 >
                     <CloseIcon />
                 </IconButton>
@@ -183,7 +184,7 @@ export default function CreateFolderModal({ open, onClose, userId, onFolderCreat
 
             <DialogContent>
                 {error && (
-                    <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+                    <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)} data-testid="create-folder-error-alert">
                         {error}
                     </Alert>
                 )}
@@ -199,6 +200,7 @@ export default function CreateFolderModal({ open, onClose, userId, onFolderCreat
                     disabled={loading}
                     sx={{ mb: 2, mt: 3 }}
                     autoFocus
+                    data-testid="create-folder-name-input"
                 />
 
                 {/* Document Selection */}
@@ -212,6 +214,7 @@ export default function CreateFolderModal({ open, onClose, userId, onFolderCreat
                             value={selectedDocuments}
                             onChange={(e) => setSelectedDocuments(e.target.value as number[])}
                             label="Select Documents (Optional)"
+                            data-testid="create-folder-documents-select"
                             renderValue={(selected) => (
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                     {selected.map((docId) => {
@@ -224,15 +227,15 @@ export default function CreateFolderModal({ open, onClose, userId, onFolderCreat
                             )}
                         >
                             {loadingDocuments ? (
-                                <MenuItem disabled>
+                                <MenuItem disabled data-testid="create-folder-loading-documents">
                                     <CircularProgress size={20} sx={{ mr: 1 }} />
                                     Loading documents...
                                 </MenuItem>
                             ) : availableDocuments.length === 0 ? (
-                                <MenuItem disabled>No documents available (all documents are already in folders)</MenuItem>
+                                <MenuItem disabled data-testid="create-folder-no-documents">No documents available (all documents are already in folders)</MenuItem>
                             ) : (
                                 availableDocuments.map((doc) => (
-                                    <MenuItem key={doc.id} value={doc.id}>
+                                    <MenuItem key={doc.id} value={doc.id} data-testid={`create-folder-document-option-${doc.id}`}>
                                         {doc.name}
                                     </MenuItem>
                                 ))
@@ -240,17 +243,17 @@ export default function CreateFolderModal({ open, onClose, userId, onFolderCreat
                         </Select>
                     </FormControl>
 
-                    <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }} data-testid="create-folder-documents-hint">
                         Select documents not currently in any folder to add them to this new folder
                     </Typography>
                 </Box>
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button onClick={handleClose} disabled={loading}>
+                <Button onClick={handleClose} disabled={loading} data-testid="create-folder-cancel-button">
                     Cancel
                 </Button>
-                <Button onClick={handleCreateFolder} variant="contained" disabled={loading || !!folderNameError || !folderName.trim()}>
+                <Button onClick={handleCreateFolder} variant="contained" disabled={loading || !!folderNameError || !folderName.trim()} data-testid="create-folder-submit-button">
                     {loading ? 'Creating...' : 'Create Folder'}
                 </Button>
             </DialogActions>

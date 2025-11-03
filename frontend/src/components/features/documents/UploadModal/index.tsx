@@ -283,7 +283,7 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
     const hasResults = uploadResults.success.length > 0 || uploadResults.failed.length > 0;
 
     return (
-        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth data-testid="upload-modal">
             <DialogTitle
                 sx={{
                     display: 'flex',
@@ -291,7 +291,7 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                     alignItems: 'center',
                 }}
             >
-                <Typography variant="h6" component="span">
+                <Typography variant="h6" component="span" data-testid="upload-modal-title">
                     Upload
                 </Typography>
                 <IconButton
@@ -301,6 +301,7 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                     sx={{
                         color: (theme) => theme.palette.grey[500],
                     }}
+                    data-testid="upload-close-button"
                 >
                     <CloseIcon />
                 </IconButton>
@@ -323,6 +324,7 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
+                    data-testid="upload-drop-zone"
                 >
                     <CloudUploadIcon sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
 
@@ -343,13 +345,14 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                         accept=".docx,.xlsx,.pdf"
                         onChange={handleFileInput}
                         style={{ display: 'none' }}
+                        data-testid="upload-file-input"
                     />
                 </Paper>
 
                 {/* Files List */}
                 {files.length > 0 && (
-                    <Box sx={{ mb: 2 }}>
-                        <Typography variant="subtitle2" gutterBottom>
+                    <Box sx={{ mb: 2 }} data-testid="upload-files-list-container">
+                        <Typography variant="subtitle2" gutterBottom data-testid="upload-files-list-header">
                             Files Ready to Upload ({validFilesCount} valid)
                         </Typography>
                         <List>
@@ -363,11 +366,13 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                                         mb: 1,
                                         bgcolor: 'background.paper',
                                     }}
+                                    data-testid={`upload-file-item-${fileItem.id}`}
                                     secondaryAction={
                                         <IconButton
                                             edge="end"
                                             onClick={() => handleRemoveFile(fileItem.id)}
                                             disabled={fileItem.status === 'uploading'}
+                                            data-testid={`upload-remove-file-${fileItem.id}`}
                                         >
                                             <DeleteIcon />
                                         </IconButton>
@@ -382,13 +387,14 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                                                     {formatFileSize(fileItem.file.size)}
                                                 </Typography>
                                                 {fileItem.status === 'uploading' && (
-                                                    <LinearProgress sx={{ mt: 1 }} />
+                                                    <LinearProgress sx={{ mt: 1 }} data-testid={`upload-progress-${fileItem.id}`} />
                                                 )}
                                                 {fileItem.status === 'success' && (
                                                     <Typography
                                                         variant="caption"
                                                         color="success.main"
                                                         sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}
+                                                        data-testid={`upload-success-${fileItem.id}`}
                                                     >
                                                         <CheckCircleIcon sx={{ fontSize: 16, mr: 0.5 }} />
                                                         Uploaded successfully
@@ -399,6 +405,7 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                                                         variant="caption"
                                                         color="error.main"
                                                         sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}
+                                                        data-testid={`upload-error-${fileItem.id}`}
                                                     >
                                                         <ErrorIcon sx={{ fontSize: 16, mr: 0.5 }} />
                                                         {fileItem.error}
@@ -415,14 +422,14 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
 
                 {/* Upload Results */}
                 {hasResults && (
-                    <Box sx={{ mb: 2 }}>
+                    <Box sx={{ mb: 2 }} data-testid="upload-results">
                         {uploadResults.success.length > 0 && (
-                            <Alert severity="success" sx={{ mb: 1 }}>
+                            <Alert severity="success" sx={{ mb: 1 }} data-testid="upload-success-alert">
                                 {uploadResults.success.length} file(s) uploaded successfully.
                             </Alert>
                         )}
                         {uploadResults.failed.length > 0 && (
-                            <Alert severity="error">
+                            <Alert severity="error" data-testid="upload-error-alert">
                                 {uploadResults.failed.length} file(s) failed to upload. You can remove failed files
                                 and try again.
                             </Alert>
@@ -441,17 +448,17 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                 {hasResults && validFilesCount === 0 ? (
                     <>
                         {uploadResults.failed.length > 0 && (
-                            <Button onClick={handleContinue} variant="contained" sx={{ mr: 2 }}>
+                            <Button onClick={handleContinue} variant="contained" sx={{ mr: 2 }} data-testid="upload-continue-button">
                                 Continue with Remaining Files
                             </Button>
                         )}
-                        <Button onClick={handleClose} variant="contained" disabled={isUploading}>
+                        <Button onClick={handleClose} variant="contained" disabled={isUploading} data-testid="upload-done-button">
                             Done
                         </Button>
                     </>
                 ) : (
                     <>
-                        <Button onClick={handleClose} disabled={isUploading}>
+                        <Button onClick={handleClose} disabled={isUploading} data-testid="upload-cancel-button">
                             Cancel
                         </Button>
                         {validFilesCount > 0 && (
@@ -459,6 +466,7 @@ export default function UploadModal({ open, onClose, userId, onUploadSuccess }: 
                                 onClick={handleUpload}
                                 variant="contained"
                                 disabled={isUploading}
+                                data-testid="upload-submit-button"
                             >
                                 {isUploading ? 'Uploading...' : `Upload ${validFilesCount} File(s)`}
                             </Button>
