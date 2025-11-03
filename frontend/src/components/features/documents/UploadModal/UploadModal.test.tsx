@@ -1,6 +1,6 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import UploadModal from './index';
+import UploadModal from './UploadModal';
 import * as documentApi from '@/lib/api/document.api';
 
 //Mock document API

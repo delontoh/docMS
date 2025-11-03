@@ -5,6 +5,7 @@ node_modules/
 .next/
 _next
 dist/
+.swc/
 
 # env
 .env

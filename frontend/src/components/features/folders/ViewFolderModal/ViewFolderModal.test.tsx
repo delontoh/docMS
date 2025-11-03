@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import ViewFolderModal from './index';
+import ViewFolderModal from './ViewFolderModal';
 import * as folderApi from '@/lib/api/folder.api';
 
 //Mock folder API

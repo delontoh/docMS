@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import CreateFolderModal from './index';
+import CreateFolderModal from './CreateFolderModal';
 import * as folderApi from '@/lib/api/folder.api';
 import * as documentApi from '@/lib/api/document.api';
 

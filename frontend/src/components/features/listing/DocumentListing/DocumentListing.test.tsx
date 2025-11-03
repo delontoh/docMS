@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import DocumentListing from './index';
+import DocumentListing from './DocumentListing';
 import documentsReducer from '@/lib/store/slices/documentsSlice';
 import { 
     getUserDocumentsAndFolders, 
@@ -23,28 +23,28 @@ jest.mock('@/lib/api', () => {
 });
 
 //Mock components
-jest.mock('@/components/features/documents/UploadModal', () => ({
+jest.mock('@/components/features/documents/UploadModal/UploadModal', () => ({
     __esModule: true,
     default: function MockUploadModal(props: { open: boolean; onClose: () => void }) {
         return props.open ? <div data-testid="upload-modal">Upload Modal</div> : null;
     },
 }));
 
-jest.mock('@/components/features/folders/CreateFolderModal', () => ({
+jest.mock('@/components/features/folders/CreateFolderModal/CreateFolderModal', () => ({
     __esModule: true,
     default: function MockCreateFolderModal(props: { open: boolean; onClose: () => void }) {
         return props.open ? <div data-testid="create-folder-modal">Create Folder Modal</div> : null;
     },
 }));
 
-jest.mock('@/components/features/folders/ViewFolderModal', () => ({
+jest.mock('@/components/features/folders/ViewFolderModal/ViewFolderModal', () => ({
     __esModule: true,
     default: function MockViewFolderModal(props: { open: boolean; onClose: () => void }) {
         return props.open ? <div data-testid="view-folder-modal">View Folder Modal</div> : null;
     },
 }));
 
-jest.mock('@/components/features/folders/DeleteFolderModal', () => ({
+jest.mock('@/components/features/folders/DeleteFolderModal/DeleteFolderModal', () => ({
     __esModule: true,
     default: function MockDeleteFolderModal(props: { open: boolean; onClose: () => void }) {
         return props.open ? <div data-testid="delete-folder-modal">Delete Folder Modal</div> : null;

@@ -47,10 +47,10 @@ import {
     getUsers,
 } from '@/lib/api';
 import type { DocumentItem, FolderItem } from '@/types';
-import UploadModal from '@/components/features/documents/UploadModal';
-import CreateFolderModal from '@/components/features/folders/CreateFolderModal';
-import ViewFolderModal from '@/components/features/folders/ViewFolderModal';
-import DeleteFolderModal from '@/components/features/folders/DeleteFolderModal';
+import UploadModal from '@/components/features/documents/UploadModal/UploadModal';
+import CreateFolderModal from '@/components/features/folders/CreateFolderModal/CreateFolderModal';
+import ViewFolderModal from '@/components/features/folders/ViewFolderModal/ViewFolderModal';
+import DeleteFolderModal from '@/components/features/folders/DeleteFolderModal/DeleteFolderModal';
 import { formatDate } from '@/lib/utils/date.utils';
 import { useDocumentsAndFolders } from '@/hooks/useDocumentsAndFolders';
 
