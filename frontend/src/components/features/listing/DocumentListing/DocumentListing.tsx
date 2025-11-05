@@ -310,13 +310,29 @@ export default function DocumentListing() {
 
     return (
         <Card sx={{ p: 3, borderRadius: 2, boxShadow: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                mb: 3,
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: { xs: 2, sm: 0 },
+                alignItems: { xs: 'flex-start', sm: 'center' }
+            }}>
                 <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
                     Documents
                 </Typography>
 
                 {/* Files and folders buttons */}
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <Box sx={{ 
+                    display: 'flex', 
+                    gap: 2, 
+                    alignItems: 'center',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    width: { xs: '100%', sm: 'auto' },
+                    '& > button': {
+                        width: { xs: '100%', sm: 'auto' }
+                    }
+                }}>
                     <Button
                         variant="outlined"
                         startIcon={<UploadIcon />}
@@ -494,7 +510,14 @@ export default function DocumentListing() {
             </TableContainer>
 
             {/* Pagination */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3 }}>
+            <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                mt: 3,
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: { xs: 2, sm: 0 },
+                alignItems: { xs: 'center', sm: 'center' }
+            }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography variant="body2">Show</Typography>
                     <FormControl size="small" sx={{ minWidth: 70 }}>
@@ -527,6 +550,11 @@ export default function DocumentListing() {
                         showFirstButton
                         showLastButton
                         disabled={displayItems.length === 0}
+                        sx={{ 
+                            width: { xs: '100%', sm: 'auto' },
+                            justifyContent: { xs: 'center', sm: 'flex-end' },
+                            display: 'flex'
+                        }}
                     />
                 )}
             </Box>
