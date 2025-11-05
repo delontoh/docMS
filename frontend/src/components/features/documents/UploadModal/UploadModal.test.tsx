@@ -128,6 +128,29 @@ describe('UploadModal', () => {
         });
     });
 
+    it('should reject empty files (0 KB)', async () => {
+        const user = userEvent.setup();
+        const emptyFile = createMockFile('empty.pdf', 0, 'application/pdf');
+
+        render(
+            <UploadModal
+                open={true}
+                onClose={mockOnClose}
+                userId={userId}
+            />
+        );
+
+        const fileInput = screen.getByTestId('upload-file-input') as HTMLInputElement;
+        
+        await user.upload(fileInput, emptyFile);
+        await waitFor(() => {
+            const fileItem = screen.getByText(/empty\.pdf/i).closest('[data-testid^="upload-file-item-"]');
+            expect(fileItem).toBeInTheDocument();
+            const errorText = fileItem?.querySelector('[data-testid^="upload-error-"]');
+            expect(errorText).toHaveTextContent(/File is empty/i);
+        });
+    });
+
     it('should detect duplicate files in upload list', async () => {
         const user = userEvent.setup();
         const file1 = createMockFile('test.pdf', 1024 * 1024, 'application/pdf');

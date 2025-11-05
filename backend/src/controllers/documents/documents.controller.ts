@@ -6,6 +6,8 @@ import type { CreateDocumentInput } from '@models/documents/documents.model';
  * Create a new document
  * POST /documents
  */
+const MAX_FILE_SIZE_KB = 1024 * 5; //5MB
+
 export const createDocument = async (req: Request, res: Response): Promise<void> => {
     try {
         const { name, file_size, document_user_id, folder_document_id } = req.body;
@@ -14,6 +16,27 @@ export const createDocument = async (req: Request, res: Response): Promise<void>
             res.status(500).json({
                 success: false,
                 message: 'Missing required fields: { name, file_size, document_user_id }',
+            });
+            return;
+        }
+
+        // Validate file size format and limit (max 5MB)
+        const fileSizeMatch = file_size.trim().match(/^([\d.]+)\s*KB$/i);
+        if (!fileSizeMatch) {
+            res.status(500).json({
+                success: false,
+                message: 'Invalid file size format',
+            });
+            return;
+        }
+
+        const fileSizeKB = parseFloat(fileSizeMatch[1]);
+        if (isNaN(fileSizeKB) || fileSizeKB <= 0 || fileSizeKB > MAX_FILE_SIZE_KB) {
+            res.status(500).json({
+                success: false,
+                message: fileSizeKB === 0 
+                    ? 'File is empty. File size must be greater than 0 KB.'
+                    : `File size must be between 1 and ${MAX_FILE_SIZE_KB} KB (5MB)`,
             });
             return;
         }

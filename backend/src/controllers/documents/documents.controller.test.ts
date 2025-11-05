@@ -179,6 +179,122 @@ describe('Documents Controller', () => {
                 error: 'Database connection failed',
             });
         });
+
+        it('should return error when file size format is invalid', async () => {
+            const req = createMockRequest({
+                body: {
+                    name: 'test-document.pdf',
+                    file_size: '100 MB',
+                    document_user_id: 1,
+                },
+            }) as Request;
+            const res = createMockResponse() as Response;
+
+            await createDocument(req, res);
+
+            expect(documentsModel.createDocument).not.toHaveBeenCalled();
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: 'Invalid file size format',
+            });
+        });
+
+        it('should return error when file size exceeds max limit', async () => {
+            const req = createMockRequest({
+                body: {
+                    name: 'test-document.pdf',
+                    file_size: '5121 KB', //>5MB
+                    document_user_id: 1,
+                },
+            }) as Request;
+            const res = createMockResponse() as Response;
+
+            await createDocument(req, res);
+
+            expect(documentsModel.createDocument).not.toHaveBeenCalled();
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: 'File size must be between 1 and 5120 KB (5MB)',
+            });
+        });
+
+        it('should accept file size at max limit', async () => {
+            const mockDocument = {
+                id: 1,
+                name: 'test-document.pdf',
+                file_size: '5120 KB',
+                file_type: 'document',
+                document_user_id: 1,
+                folder_document_id: null,
+                created_at: new Date(),
+                updated_at: new Date(),
+                created_by: { id: 1, name: 'Test User', email: 'test@example.com' },
+                belong_to_folder: null,
+            };
+
+            (documentsModel.createDocument as jest.Mock).mockResolvedValue(mockDocument);
+
+            const req = createMockRequest({
+                body: {
+                    name: 'test-document.pdf',
+                    file_size: '5120 KB',
+                    document_user_id: 1,
+                },
+            }) as Request;
+            const res = createMockResponse() as Response;
+
+            await createDocument(req, res);
+
+            expect(documentsModel.createDocument).toHaveBeenCalledWith({
+                name: 'test-document.pdf',
+                file_size: '5120 KB',
+                document_user_id: 1,
+                folder_document_id: null,
+            });
+            expect(res.status).toHaveBeenCalledWith(201);
+        });
+
+        it('should return error when file size is NaN', async () => {
+            const req = createMockRequest({
+                body: {
+                    name: 'test-document.pdf',
+                    file_size: 'abc KB',
+                    document_user_id: 1,
+                },
+            }) as Request;
+            const res = createMockResponse() as Response;
+
+            await createDocument(req, res);
+
+            expect(documentsModel.createDocument).not.toHaveBeenCalled();
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: 'Invalid file size format',
+            });
+        });
+
+        it('should return error when file size is 0 KB', async () => {
+            const req = createMockRequest({
+                body: {
+                    name: 'test-document.pdf',
+                    file_size: '0 KB',
+                    document_user_id: 1,
+                },
+            }) as Request;
+            const res = createMockResponse() as Response;
+
+            await createDocument(req, res);
+
+            expect(documentsModel.createDocument).not.toHaveBeenCalled();
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: 'File is empty. File size must be greater than 0 KB.',
+            });
+        });
     });
 
     describe('deleteDocument', () => {

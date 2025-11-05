@@ -47,19 +47,19 @@ const ALLOWED_EXTENSIONS = ['.docx', '.xlsx', '.pdf']; // Allowed file type exte
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 
 const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return '0 KB';
 
-    const k = 1024; // 1024 Bytes in 1 Kilobyte
-    const sizes = ['Bytes', 'KB', 'MB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    const sizeIndex = Math.min(i, sizes.length - 1);
+    const kb = bytes / 1024;
+    if (kb >= 1024) {
+        const mb = kb / 1024;
+        const rounded = Math.round(mb * 100) / 100;
+        const formatted = rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(2);
+        return `${formatted} MB`;
+    }
 
-    const convertedSize = bytes / Math.pow(k, sizeIndex);
-
-    const roundedSize = Math.round(convertedSize * 100) / 100;
-    const formattedSize = roundedSize % 1 === 0 ? roundedSize.toString() : roundedSize.toFixed(2);
-
-    return `${formattedSize} ${sizes[sizeIndex]}`;
+    const rounded = Math.round(kb * 100) / 100;
+    const formatted = rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(2);
+    return `${formatted} KB`;
 };
 
 const getFileExtension = (filename: string): string => {
@@ -71,6 +71,11 @@ const validateFile = (file: File): string | null => {
     const extension = getFileExtension(file.name);
     if (!ALLOWED_EXTENSIONS.includes(extension)) {
         return `File type ${extension} is not allowed. Only ${ALLOWED_EXTENSIONS.join(', ')} files are supported.`;
+    }
+
+    //Check file size not empty
+    if (file.size === 0) {
+        return 'File is empty. Please select a file with content.';
     }
 
     //Check file size limit

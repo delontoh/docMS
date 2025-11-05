@@ -1,31 +1,43 @@
 /**
- * Format file size from bytes to readable format (Bytes, KB, MB)
+ * Format file size string to readable format
  * @param fileSize - File size string
- * @returns Formatted file size string
+ * @returns Formatted file size string (e.g., "1 MB", "5 MB", "100 KB")
  */
 export const formatFileSize = (fileSize: string): string => {
-    if (fileSize.includes('KB') || fileSize.includes('MB') || fileSize.includes('Bytes') || fileSize.includes('GB')) {
-        return fileSize;
+    const fileSizeStr = fileSize.trim();
+    
+    const formattedMatch = fileSizeStr.match(/^([\d.]+)\s*KB$/i);
+    if (!formattedMatch) {
+        return fileSizeStr;
     }
-
-    const bytes = Number.parseInt(fileSize, 10);
-    if (isNaN(bytes) || bytes < 0) {
-        return fileSize;
+    
+    const [, sizeStr] = formattedMatch;
+    const size = parseFloat(sizeStr);
+    
+    if (isNaN(size) || size < 0) {
+        return fileSizeStr;
     }
-
-    if (bytes === 0) return '0 Bytes';
-
-    const k = 1024; //1024 Bytes in 1 Kilobyte
-    const sizes = ['Bytes', 'KB', 'MB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    const sizeIndex = Math.min(i, sizes.length - 1);
     
-    const convertedSize = bytes / Math.pow(k, sizeIndex);
-    
-    //Round to 2 decimal places, but show integer if it's a whole number
-    const roundedSize = Math.round(convertedSize * 100) / 100;
-    const formattedSize = roundedSize % 1 === 0 ? roundedSize.toString() : roundedSize.toFixed(2);
-    
-    return `${formattedSize} ${sizes[sizeIndex]}`;
+    //Convert to bytes and format
+    const bytes = size * 1024;
+    return formatBytes(bytes);
 };
 
+/**
+ * Format bytes to readable format
+ */
+const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return '0 KB';
+    
+    const kb = bytes / 1024;
+    if (kb >= 1024) {
+        const mb = kb / 1024;
+        const rounded = Math.round(mb * 100) / 100;
+        const formatted = rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(2);
+        return `${formatted} MB`;
+    }
+    
+    const rounded = Math.round(kb * 100) / 100;
+    const formatted = rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(2);
+    return `${formatted} KB`;
+};
